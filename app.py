@@ -61,7 +61,31 @@ def get_analyzer_service():
 
 
 # Get service
-service = get_analyzer_service()
+try:
+    service = get_analyzer_service()
+except Exception as e:
+    st.error(f"❌ Initialization Error: {str(e)}")
+    st.info("""
+    ### ⚙️ Setup Required
+    
+    To use IntelligentInsightAnalyzer, you need to:
+    
+    1. **Add your OpenAI API key** to Streamlit Cloud Secrets:
+       - Click the menu (⋯) → Settings → Secrets
+       - Add: `OPENAI_API_KEY = "sk-..."`
+       - Click Save and wait 1 minute
+       - Refresh this page
+    
+    2. **Get an OpenAI API key:**
+       - Visit: https://platform.openai.com/api-keys
+       - Create a new API key
+       - Copy the key starting with `sk-`
+    
+    3. **Add to Streamlit Cloud Secrets:**
+       - Settings → Secrets
+       - Paste in TOML format: `OPENAI_API_KEY = "sk-..."`
+    """)
+    st.stop()
 
 
 # ============================================================================

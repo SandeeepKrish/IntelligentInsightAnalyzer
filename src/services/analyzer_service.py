@@ -5,6 +5,7 @@ Business logic layer that coordinates between utils and UI components
 
 import pandas as pd
 import io
+import os
 from typing import Dict, Any, Generator
 
 from config import AppConfig
@@ -21,6 +22,13 @@ class AnalyzerService:
             system_context=AppConfig.SYSTEM_PROMPT
         )
         
+        # Check if API key exists
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            import streamlit as st
+            st.error("❌ OPENAI_API_KEY not found. Please add it to Streamlit Cloud Secrets.")
+            st.stop()
+        
         try:
             self.llm = StreamingLLM(
                 model=AppConfig.OPENAI_MODEL,
@@ -28,7 +36,9 @@ class AnalyzerService:
                 max_tokens=AppConfig.OPENAI_MAX_TOKENS
             )
         except ValueError as e:
-            raise ValueError(f"LLM initialization failed: {str(e)}")
+            import streamlit as st
+            st.error(f"❌ LLM initialization failed: {str(e)}")
+            st.stop()
         
         self.data_analyzer = DataAnalyzer()
         self.current_dataframe = None
