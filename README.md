@@ -1,4 +1,4 @@
-# 🤖 AI Data Analyst Chatbot
+# 🔬 IntelligentInsightAnalyzer
 
 A professional-grade data analysis application with AI-powered multi-turn conversations, powered by OpenAI and Streamlit.
 

@@ -12,9 +12,9 @@ class AppConfig:
     """Centralized application configuration"""
     
     # App metadata
-    APP_TITLE = "🤖 AI Data Analyst Chatbot"
-    APP_ICON = "🤖"
-    APP_DESCRIPTION = "Upload CSV/Excel data and have multi-turn conversations with AI-powered analysis"
+    APP_TITLE = "🔬 IntelligentInsightAnalyzer"
+    APP_ICON = "🔬"
+    APP_DESCRIPTION = "AI-powered multi-domain data analysis with advanced temporal, aggregation, and filtering capabilities"
     
     # Streamlit config
     LAYOUT = "wide"

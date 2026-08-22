@@ -36,14 +36,14 @@ from components import (
 # ============================================================================
 
 st.set_page_config(
-    page_title=AppConfig.APP_TITLE,
-    page_icon=AppConfig.APP_ICON,
+    page_title="IntelligentInsightAnalyzer",
+    page_icon="🤖",
     layout=AppConfig.LAYOUT,
     initial_sidebar_state=AppConfig.SIDEBAR_STATE
 )
 
-st.title(AppConfig.APP_TITLE)
-st.caption(AppConfig.APP_DESCRIPTION)
+st.title("🔬 IntelligentInsightAnalyzer")
+st.caption("AI-powered multi-domain data analysis with advanced temporal and aggregation analytics")
 
 
 # ============================================================================
@@ -161,4 +161,4 @@ else:
 # ============================================================================
 
 st.divider()
-st.caption("🤖 AI Data Analyst Chatbot | Built with Streamlit & OpenAI | Version 2.0")
+st.caption("🔬 IntelligentInsightAnalyzer | Built with Streamlit & OpenAI | Version 2.0")

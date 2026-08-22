@@ -1,4 +1,4 @@
-"""Utils module for AI Data Analyst Chatbot"""
+"""Utils module for IntelligentInsightAnalyzer"""
 
 from .memory import ConversationMemory
 from .llm import StreamingLLM
