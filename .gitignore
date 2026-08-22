@@ -4,6 +4,7 @@
 .env.*.local
 *.key
 secrets.json
+.streamlit/secrets.toml
 
 # Python
 __pycache__/
