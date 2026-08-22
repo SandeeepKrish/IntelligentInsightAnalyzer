@@ -1,0 +1,453 @@
+"""
+Advanced Analysis Component
+Provides UI for temporal analysis, grouping, aggregations, and custom analytics
+"""
+
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+from utils import AnalysisEngine
+from services import AnalyzerService
+
+
+def render_advanced_analysis(service: AnalyzerService):
+    """
+    Render the advanced analysis tab with multiple analysis types
+    
+    Args:
+        service: AnalyzerService instance
+    """
+    df = service.get_dataframe()
+    analysis_engine = AnalysisEngine(df)
+    
+    # Sidebar for analysis selection
+    analysis_type = st.selectbox(
+        "Select Analysis Type",
+        [
+            "📊 Group & Aggregate",
+            "📅 Temporal Analysis (Time Series)",
+            "📈 Percentage Distribution",
+            "🔗 Cross-Tabulation",
+            "🔍 Filtered Analysis",
+            "📋 Multi-Group Analysis",
+            "📊 Summary Statistics"
+        ]
+    )
+    
+    # ====================================================================
+    # 1. GROUP & AGGREGATE
+    # ====================================================================
+    
+    if analysis_type == "📊 Group & Aggregate":
+        st.subheader("📊 Group & Aggregate Analysis")
+        st.write("Group your data by a column and aggregate using different methods")
+        
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            group_col = st.selectbox("Group By", analysis_engine.categorical_cols, key="group_col_1")
+        
+        with col2:
+            metric_col = st.selectbox(
+                "Metric (Optional)",
+                [None] + analysis_engine.numeric_cols,
+                key="metric_col_1"
+            )
+        
+        with col3:
+            aggregation = st.selectbox(
+                "Aggregation",
+                ["count", "sum", "mean", "min", "max", "median"],
+                key="agg_1"
+            )
+        
+        with col4:
+            sort_by = st.selectbox("Sort By", ["value", "group"], key="sort_1")
+        
+        if st.button("🔍 Analyze", key="btn_group"):
+            result = analysis_engine.group_by_analysis(group_col, metric_col, aggregation, sort_by)
+            
+            # Display table
+            st.markdown("### Results Table")
+            st.dataframe(result, use_container_width=True)
+            
+            # Display chart
+            st.markdown("### Visualization")
+            fig = px.bar(
+                result,
+                x=group_col,
+                y='value',
+                title=f"{aggregation.upper()} by {group_col}",
+                labels={'value': f'{aggregation.title()} Value'}
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Summary
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Groups", len(result))
+            with col2:
+                st.metric("Max Value", result['value'].max())
+            with col3:
+                st.metric("Mean Value", result['value'].mean().round(2))
+    
+    # ====================================================================
+    # 2. TEMPORAL ANALYSIS
+    # ====================================================================
+    
+    elif analysis_type == "📅 Temporal Analysis (Time Series)":
+        st.subheader("📅 Temporal Analysis (Time Series)")
+        st.write("Analyze your data over time with monthly, yearly, or custom periods")
+        
+        datetime_cols = analysis_engine.get_datetime_columns()
+        
+        if not datetime_cols:
+            st.warning("⚠️ No datetime columns found in your dataset. Please ensure you have a date column.")
+            st.info("💡 Tip: You can ask the AI to help identify date columns in your data")
+            return
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            date_col = st.selectbox("Date Column", datetime_cols, key="date_col")
+        
+        with col2:
+            period = st.selectbox(
+                "Time Period",
+                ["month", "year", "quarter", "week", "day"],
+                key="period"
+            )
+        
+        with col3:
+            aggregation = st.selectbox(
+                "Aggregation",
+                ["count", "sum", "mean", "min", "max", "median"],
+                key="agg_temporal"
+            )
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            metric_col = st.selectbox(
+                "Metric (Optional)",
+                [None] + analysis_engine.numeric_cols,
+                key="metric_temporal"
+            )
+        
+        with col2:
+            group_col = st.selectbox(
+                "Group By (Optional)",
+                [None] + analysis_engine.categorical_cols,
+                key="group_temporal"
+            )
+        
+        if st.button("📈 Generate Time Series", key="btn_temporal"):
+            try:
+                result = analysis_engine.temporal_analysis(
+                    date_col, metric_col, group_col, period, aggregation
+                )
+                
+                # Display table
+                st.markdown("### Time Series Data")
+                st.dataframe(result, use_container_width=True)
+                
+                # Display chart
+                st.markdown("### Trend Visualization")
+                if group_col:
+                    fig = px.line(
+                        result,
+                        x='period',
+                        y='value',
+                        color='group',
+                        markers=True,
+                        title=f"{aggregation.title()} {period.title()} Trend by {group_col}"
+                    )
+                else:
+                    fig = px.line(
+                        result,
+                        x='period',
+                        y='value',
+                        markers=True,
+                        title=f"{aggregation.title()} {period.title()} Trend"
+                    )
+                st.plotly_chart(fig, use_container_width=True)
+                
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")
+    
+    # ====================================================================
+    # 3. PERCENTAGE DISTRIBUTION
+    # ====================================================================
+    
+    elif analysis_type == "📈 Percentage Distribution":
+        st.subheader("📈 Percentage Distribution")
+        st.write("See what percentage each category represents")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            group_col = st.selectbox("Group By", analysis_engine.categorical_cols, key="group_pct")
+        
+        with col2:
+            metric_col = st.selectbox(
+                "Metric (Optional)",
+                [None] + analysis_engine.numeric_cols,
+                key="metric_pct"
+            )
+        
+        if st.button("📊 Calculate Percentages", key="btn_pct"):
+            result = analysis_engine.calculate_percentages(group_col, metric_col)
+            
+            # Display table
+            st.markdown("### Percentage Breakdown")
+            st.dataframe(result, use_container_width=True)
+            
+            # Pie chart
+            st.markdown("### Pie Chart")
+            fig = px.pie(
+                result,
+                names=group_col,
+                values='count',
+                title=f"Distribution by {group_col}",
+                hover_data=['percentage']
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Bar chart with percentages
+            st.markdown("### Percentage Bar Chart")
+            fig = px.bar(
+                result,
+                x=group_col,
+                y='percentage',
+                title=f"Percentage Distribution by {group_col}",
+                labels={'percentage': 'Percentage (%)'},
+                color='percentage',
+                color_continuous_scale='Viridis'
+            )
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # ====================================================================
+    # 4. CROSS-TABULATION
+    # ====================================================================
+    
+    elif analysis_type == "🔗 Cross-Tabulation":
+        st.subheader("🔗 Cross-Tabulation Analysis")
+        st.write("Compare two categorical variables in a table format")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            row_col = st.selectbox("Row Categories", analysis_engine.categorical_cols, key="row_cross")
+        
+        with col2:
+            col_col = st.selectbox(
+                "Column Categories",
+                [c for c in analysis_engine.categorical_cols if c != row_col],
+                key="col_cross"
+            )
+        
+        with col3:
+            aggregation = st.selectbox(
+                "Aggregation",
+                ["count", "sum", "mean"],
+                key="agg_cross"
+            )
+        
+        values_col = st.selectbox(
+            "Values Column (Optional for sum/mean)",
+            [None] + analysis_engine.numeric_cols,
+            key="values_cross"
+        )
+        
+        if st.button("🔗 Create Cross-Tab", key="btn_cross"):
+            result = analysis_engine.crosstab_analysis(row_col, col_col, values_col, aggregation)
+            
+            st.markdown("### Cross-Tabulation Table")
+            st.dataframe(result, use_container_width=True)
+            
+            # Heatmap
+            st.markdown("### Heatmap Visualization")
+            pivot_result = result.set_index(row_col).iloc[:, 1:]
+            fig = go.Figure(data=go.Heatmap(
+                z=pivot_result.values,
+                x=pivot_result.columns,
+                y=pivot_result.index,
+                colorscale='Blues'
+            ))
+            fig.update_layout(
+                title=f"Cross-Tabulation: {row_col} vs {col_col}",
+                xaxis_title=col_col,
+                yaxis_title=row_col
+            )
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # ====================================================================
+    # 5. FILTERED ANALYSIS
+    # ====================================================================
+    
+    elif analysis_type == "🔍 Filtered Analysis":
+        st.subheader("🔍 Filtered Analysis")
+        st.write("Apply filters and then analyze the filtered data")
+        
+        # Build filters
+        st.markdown("### Step 1: Apply Filters")
+        filters = {}
+        
+        filter_cols = st.multiselect("Select columns to filter", analysis_engine.categorical_cols)
+        
+        for col in filter_cols:
+            unique_vals = analysis_engine.get_unique_values(col)
+            selected_vals = st.multiselect(
+                f"Select values for {col}",
+                unique_vals,
+                key=f"filter_{col}"
+            )
+            if selected_vals:
+                filters[col] = selected_vals
+        
+        if filters:
+            st.markdown("### Step 2: Aggregate Filtered Data")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                group_col = st.selectbox("Group By", analysis_engine.categorical_cols, key="group_filter")
+            
+            with col2:
+                metric_col = st.selectbox(
+                    "Metric (Optional)",
+                    [None] + analysis_engine.numeric_cols,
+                    key="metric_filter"
+                )
+            
+            with col3:
+                aggregation = st.selectbox(
+                    "Aggregation",
+                    ["count", "sum", "mean"],
+                    key="agg_filter"
+                )
+            
+            if st.button("🔍 Analyze Filtered Data", key="btn_filter"):
+                result = analysis_engine.filter_and_aggregate(filters, group_col, metric_col, aggregation)
+                
+                st.markdown("### Filtered Results")
+                st.dataframe(result, use_container_width=True)
+                
+                fig = px.bar(
+                    result,
+                    x=group_col,
+                    y='value',
+                    title=f"Analysis of Filtered Data",
+                    labels={'value': f'{aggregation.title()} Value'}
+                )
+                st.plotly_chart(fig, use_container_width=True)
+                
+                st.info(f"📊 Filtered data: {len(result)} groups found")
+        else:
+            st.info("👈 Select columns and values to filter")
+    
+    # ====================================================================
+    # 6. MULTI-GROUP ANALYSIS
+    # ====================================================================
+    
+    elif analysis_type == "📋 Multi-Group Analysis":
+        st.subheader("📋 Multi-Group Analysis")
+        st.write("Group by multiple columns simultaneously")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            group_cols = st.multiselect(
+                "Select columns to group by",
+                analysis_engine.categorical_cols,
+                max_selections=3,
+                key="multigroup_cols"
+            )
+        
+        with col2:
+            metric_col = st.selectbox(
+                "Metric (Optional)",
+                [None] + analysis_engine.numeric_cols,
+                key="metric_multi"
+            )
+        
+        with col3:
+            aggregation = st.selectbox(
+                "Aggregation",
+                ["count", "sum", "mean"],
+                key="agg_multi"
+            )
+        
+        if st.button("📋 Multi-Group Analysis", key="btn_multi"):
+            if not group_cols:
+                st.warning("⚠️ Please select at least one column to group by")
+            else:
+                result = analysis_engine.multi_group_analysis(group_cols, metric_col, aggregation)
+                
+                st.markdown("### Multi-Group Results")
+                st.dataframe(result, use_container_width=True)
+                
+                # Summary statistics
+                st.markdown("### Summary")
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Total Groups", len(result))
+                with col2:
+                    st.metric("Max Value", result['value'].max() if 'value' in result.columns else 0)
+                with col3:
+                    st.metric("Mean Value", result['value'].mean().round(2) if 'value' in result.columns else 0)
+    
+    # ====================================================================
+    # 7. SUMMARY STATISTICS
+    # ====================================================================
+    
+    elif analysis_type == "📊 Summary Statistics":
+        st.subheader("📊 Summary Statistics")
+        st.write("Get detailed statistics for a numeric column")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            col = st.selectbox("Select numeric column", analysis_engine.numeric_cols, key="stats_col")
+        
+        with col2:
+            group_col = st.selectbox(
+                "Group By (Optional)",
+                [None] + analysis_engine.categorical_cols,
+                key="stats_group"
+            )
+        
+        if st.button("📊 Calculate Stats", key="btn_stats"):
+            stats = analysis_engine.get_summary_stats(col, group_col)
+            
+            if isinstance(stats, dict):
+                # Display as metrics
+                st.markdown("### Statistics")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("Count", stats.get('count', 0))
+                with col2:
+                    st.metric("Mean", f"{stats.get('mean', 0):.2f}")
+                with col3:
+                    st.metric("Median", f"{stats.get('median', 0):.2f}")
+                with col4:
+                    st.metric("Std Dev", f"{stats.get('std', 0):.2f}")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    st.metric("Min", f"{stats.get('min', 0):.2f}")
+                with col2:
+                    st.metric("Max", f"{stats.get('max', 0):.2f}")
+                with col3:
+                    st.metric("Q25", f"{stats.get('q25', 0):.2f}")
+                with col4:
+                    st.metric("Q75", f"{stats.get('q75', 0):.2f}")
+                
+                # Box plot
+                st.markdown("### Distribution Visualization")
+                fig = px.box(df, y=col, title=f"Distribution of {col}")
+                st.plotly_chart(fig, use_container_width=True)
