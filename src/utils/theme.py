@@ -204,40 +204,36 @@ def apply_theme_styles(theme_name: str) -> str:
             color: {text_color} !important;
         }}
         
-        /* ===== CHAT MESSAGES ===== */
+        /* ===== CHAT MESSAGES - FLAT DESIGN (NO NESTED BOXES) ===== */
         .stChatMessage {{
             background-color: {sidebar_color} !important;
             color: {text_color} !important;
             border: 1px solid {border_color} !important;
             border-radius: 12px !important;
             padding: 16px !important;
+            margin: 8px 0 !important;
         }}
         
-        /* Chat message container background */
         [data-testid="stChatMessage"] {{
             background-color: {sidebar_color} !important;
             color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+            border-radius: 12px !important;
         }}
         
+        /* Remove nested container backgrounds */
+        [data-testid="stChatMessage"] > div {{
+            background-color: transparent !important;
+        }}
+        
+        /* All nested content transparent background */
         [data-testid="stChatMessage"] * {{
-            background-color: {sidebar_color} !important;
+            background-color: transparent !important;
             color: {text_color} !important;
         }}
         
-        /* Chat message text */
-        [data-testid="stChatMessage"] p {{
-            color: {text_color} !important;
-        }}
-        
-        /* Chat message content */
-        .stChatMessage > div {{
-            background-color: {sidebar_color} !important;
-            color: {text_color} !important;
-        }}
-        
-        /* All nested content in chat message */
-        .stChatMessage > div > * {{
-            background-color: {sidebar_color} !important;
+        [data-testid="stChatMessage"] p,
+        [data-testid="stChatMessage"] span {{
             color: {text_color} !important;
         }}
         
@@ -339,14 +335,42 @@ def apply_theme_styles(theme_name: str) -> str:
         
         /* ===== CHAT INPUT ===== */
         .stChatInput {{
-            background-color: {sidebar_color} !important;
+            background-color: {bg_color} !important;
             color: {text_color} !important;
         }}
         
         .stChatInput input {{
-            background-color: {bg_color} !important;
+            background-color: {sidebar_color} !important;
             color: {text_color} !important;
-            border: 1px solid {border_color} !important;
+            border: 2px solid {border_color} !important;
+            border-radius: 10px !important;
+            padding: 12px 16px !important;
+        }}
+        
+        .stChatInput input::placeholder {{
+            color: {text_color}99 !important;
+        }}
+        
+        /* ===== SEND BUTTON - GREEN ===== */
+        [data-testid="chatInputSubmitButton"] {{
+            background-color: #238636 !important;
+            border: none !important;
+            border-radius: 8px !important;
+        }}
+        
+        [data-testid="chatInputSubmitButton"] button {{
+            background-color: #238636 !important;
+            color: white !important;
+            border: none !important;
+        }}
+        
+        [data-testid="chatInputSubmitButton"] button:hover {{
+            background-color: #2ea043 !important;
+        }}
+        
+        [data-testid="chatInputSubmitButton"] svg {{
+            fill: white !important;
+            stroke: white !important;
         }}
         
         /* ===== EXPANDER ===== */
