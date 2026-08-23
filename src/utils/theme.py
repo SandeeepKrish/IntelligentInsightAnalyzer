@@ -208,6 +208,37 @@ def apply_theme_styles(theme_name: str) -> str:
         .stChatMessage {{
             background-color: {sidebar_color} !important;
             color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+            border-radius: 12px !important;
+            padding: 16px !important;
+        }}
+        
+        /* Chat message container background */
+        [data-testid="stChatMessage"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        [data-testid="stChatMessage"] * {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Chat message text */
+        [data-testid="stChatMessage"] p {{
+            color: {text_color} !important;
+        }}
+        
+        /* Chat message content */
+        .stChatMessage > div {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* All nested content in chat message */
+        .stChatMessage > div > * {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
         }}
         
         /* ===== BUTTONS ===== */
@@ -285,6 +316,18 @@ def apply_theme_styles(theme_name: str) -> str:
         
         /* ===== INFO/SUCCESS/ERROR/WARNING ===== */
         .stAlert {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+            border-radius: 8px !important;
+        }}
+        
+        [data-testid="stAlert"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        [data-testid="stAlert"] * {{
             background-color: {sidebar_color} !important;
             color: {text_color} !important;
         }}
