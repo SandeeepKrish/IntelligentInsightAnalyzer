@@ -139,39 +139,39 @@ def apply_chat_styling():
                 opacity: 1 !important;
             }
             
-            /* ===== SEND BUTTON - PROFESSIONAL GREEN ARROW ===== */
-            [data-testid="chatInputSubmitButton"] {
-                background-color: transparent !important;
-                border: none !important;
-                padding: 8px 12px !important;
-            }
-            
-            [data-testid="chatInputSubmitButton"] button {
-                background-color: #238636 !important;
-                color: white !important;
-                border: none !important;
-                border-radius: 8px !important;
-                padding: 10px 14px !important;
-                cursor: pointer !important;
-                transition: all 0.2s ease !important;
-            }
-            
-            [data-testid="chatInputSubmitButton"] button:hover {
-                background-color: #2ea043 !important;
-                transform: scale(1.05) !important;
-            }
-            
-            [data-testid="chatInputSubmitButton"] button:active {
-                background-color: #1f6feb !important;
-            }
-            
-            /* Arrow icon styling */
-            [data-testid="chatInputSubmitButton"] svg {
-                fill: white !important;
-                stroke: white !important;
-                width: 20px !important;
-                height: 20px !important;
-            }
+        /* ===== SEND BUTTON - GREEN ARROW ===== */
+        [data-testid="chatInputSubmitButton"] {
+            background-color: transparent !important;
+            border: none !important;
+            padding: 8px 12px !important;
+        }
+        
+        [data-testid="chatInputSubmitButton"] button {
+            background-color: #238636 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 10px 14px !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        [data-testid="chatInputSubmitButton"] button:hover {
+            background-color: #2ea043 !important;
+            transform: scale(1.05) !important;
+        }
+        
+        [data-testid="chatInputSubmitButton"] button:active {
+            background-color: #1f6feb !important;
+        }
+        
+        /* Arrow icon styling */
+        [data-testid="chatInputSubmitButton"] svg {
+            fill: white !important;
+            stroke: white !important;
+            width: 20px !important;
+            height: 20px !important;
+        }
             
             /* ===== CURSOR STYLING ===== */
             input::selection,

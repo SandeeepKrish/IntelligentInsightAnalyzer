@@ -237,16 +237,47 @@ def apply_theme_styles(theme_name: str) -> str:
             color: {text_color} !important;
         }}
         
-        /* ===== BUTTONS ===== */
+        /* ===== BUTTONS - SIMPLE STYLING ===== */
         .stButton > button {{
-            background-color: {primary_color} !important;
-            color: white !important;
-            border: none !important;
-            border-radius: 6px !important;
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+            border-radius: 8px !important;
+            padding: 10px 16px !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
         }}
         
         .stButton > button:hover {{
             opacity: 0.85 !important;
+            transform: translateY(-1px) !important;
+        }}
+        
+        .stButton > button:active {{
+            transform: translateY(0) !important;
+            opacity: 0.75 !important;
+        }}
+        
+        /* Remove blue focus outline */
+        .stButton > button:focus {{
+            outline: none !important;
+            border: 1px solid {border_color} !important;
+            box-shadow: none !important;
+        }}
+        
+        /* All buttons - remove blue styling */
+        button {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+            border-radius: 8px !important;
+        }}
+        
+        button:focus {{
+            outline: none !important;
+            box-shadow: none !important;
         }}
         
         /* ===== INPUT FIELDS ===== */
