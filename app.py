@@ -27,7 +27,9 @@ from components import (
     render_data_explorer,
     render_data_quality,
     render_charts,
-    render_advanced_analysis
+    render_advanced_analysis,
+    render_theme_toggle,
+    apply_custom_theme
 )
 
 
@@ -44,6 +46,11 @@ st.set_page_config(
 
 st.title("🔬 IntelligentInsightAnalyzer")
 st.caption("AI-powered multi-domain data analysis with advanced temporal and aggregation analytics")
+
+# Apply custom theme
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+apply_custom_theme(st.session_state.theme)
 
 
 # ============================================================================
@@ -134,6 +141,9 @@ with st.sidebar:
     if st.session_state.get("file_loaded", False):
         summary = service.get_conversation_summary()
         st.caption(f"📊 Messages in chat: {summary['total_messages']}")
+    
+    # Theme toggle at the bottom of sidebar
+    render_theme_toggle()
 
 
 # ============================================================================
