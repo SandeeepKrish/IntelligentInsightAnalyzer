@@ -4,7 +4,7 @@ Provides UI controls for switching between light and dark modes
 """
 
 import streamlit as st
-from utils.theme import Theme, apply_theme_styles
+from utils import Theme, apply_theme_styles
 
 
 def render_theme_toggle():
