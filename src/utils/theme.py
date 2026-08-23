@@ -91,7 +91,7 @@ headless = true
 
 def apply_theme_styles(theme_name: str) -> str:
     """
-    Generate custom CSS for theme
+    Generate custom CSS for theme - FULL APP THEMING
     
     Args:
         theme_name: "light" or "dark"
@@ -100,193 +100,186 @@ def apply_theme_styles(theme_name: str) -> str:
         CSS string for custom styling
     """
     theme = Theme.get_theme(theme_name)
+    bg_color = theme['background_color']
+    sidebar_color = theme['secondary_background_color']
+    text_color = theme['text_color']
+    primary_color = theme['primary_color']
+    border_color = theme['border_color']
     
     css = f"""
     <style>
-        /* Import Google Fonts */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-        
-        /* Root variables for dynamic theming */
-        :root {{
-            --primary-color: {theme['primary_color']};
-            --background-color: {theme['background_color']};
-            --secondary-bg: {theme['secondary_background_color']};
-            --text-color: {theme['text_color']};
-            --border-color: {theme['border_color']};
-            --success-color: {theme['success_color']};
-            --error-color: {theme['error_color']};
-            --warning-color: {theme['warning_color']};
-            --info-color: {theme['info_color']};
+        /* ===== ENTIRE APP BACKGROUND ===== */
+        html, body {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
         }}
         
-        /* Main app background */
         .stApp {{
-            background-color: {theme['background_color']} !important;
-            color: {theme['text_color']} !important;
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
         }}
         
-        /* Sidebar styling */
-        .css-1d391kg {{
-            background-color: {theme['secondary_background_color']} !important;
+        /* ===== SIDEBAR STYLING ===== */
+        [data-testid="stSidebar"] {{
+            background-color: {sidebar_color} !important;
         }}
         
-        /* Main content area */
-        .main .block-container {{
-            background-color: {theme['background_color']} !important;
-            color: {theme['text_color']} !important;
+        [data-testid="stSidebar"] * {{
+            color: {text_color} !important;
         }}
         
-        /* Headers and text */
-        h1, h2, h3, h4, h5, h6, p, div, span {{
-            color: {theme['text_color']} !important;
+        /* ===== MAIN CONTENT ===== */
+        .main {{
+            background-color: {bg_color} !important;
         }}
         
-        /* Streamlit elements */
-        .stSelectbox > div > div {{
-            background-color: {theme['secondary_background_color']} !important;
-            color: {theme['text_color']} !important;
-            border-color: {theme['border_color']} !important;
+        .block-container {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
         }}
         
+        /* ===== ALL TEXT ELEMENTS ===== */
+        h1, h2, h3, h4, h5, h6 {{
+            color: {text_color} !important;
+        }}
+        
+        p, span, div, label, th, td {{
+            color: {text_color} !important;
+        }}
+        
+        /* ===== CHAT MESSAGES ===== */
+        .stChatMessage {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* ===== BUTTONS ===== */
         .stButton > button {{
-            background-color: {theme['primary_color']} !important;
+            background-color: {primary_color} !important;
             color: white !important;
             border: none !important;
             border-radius: 6px !important;
         }}
         
         .stButton > button:hover {{
-            background-color: {theme['primary_color']}CC !important;
-            transform: translateY(-1px) !important;
+            opacity: 0.85 !important;
         }}
         
-        /* Chat messages */
-        .stChatMessage {{
-            background-color: {theme['secondary_background_color']} !important;
-            border: 1px solid {theme['border_color']} !important;
-            border-radius: 10px !important;
-            margin: 8px 0 !important;
+        /* ===== INPUT FIELDS ===== */
+        .stTextInput input,
+        .stNumberInput input,
+        .stSelectbox input {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
         }}
         
-        /* User message styling */
-        .stChatMessage[data-testid="user-message"] {{
-            background: linear-gradient(135deg, {theme['chat_user_bg']}, {theme['primary_color']}) !important;
+        /* ===== SELECT & DROPDOWN ===== */
+        .stSelectbox > div > div {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
         }}
         
-        /* Assistant message styling */
-        .stChatMessage[data-testid="assistant-message"] {{
-            background-color: {theme['chat_assistant_bg']} !important;
+        /* ===== FILE UPLOADER ===== */
+        .stFileUploader {{
+            background-color: {sidebar_color} !important;
         }}
         
-        /* Tabs */
+        /* ===== METRICS ===== */
+        .stMetric {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* ===== DATAFRAMES ===== */
+        .stDataFrame {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* ===== TABS ===== */
         .stTabs [data-baseweb="tab"] {{
-            background-color: {theme['secondary_background_color']} !important;
-            color: {theme['text_color']} !important;
-            border-radius: 8px 8px 0 0 !important;
-        }}
-        
-        .stTabs [data-baseweb="tab"]:hover {{
-            background-color: {theme['primary_color']}22 !important;
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
         }}
         
         .stTabs [aria-selected="true"] {{
-            background-color: {theme['primary_color']} !important;
+            background-color: {primary_color} !important;
             color: white !important;
         }}
         
-        /* Metrics */
-        .metric-container > div {{
-            background-color: {theme['secondary_background_color']} !important;
-            border: 1px solid {theme['border_color']} !important;
-            border-radius: 8px !important;
+        /* ===== INFO/SUCCESS/ERROR/WARNING ===== */
+        .stAlert {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
         }}
         
-        /* Dataframes */
-        .stDataFrame {{
-            background-color: {theme['secondary_background_color']} !important;
+        /* ===== DIVIDERS ===== */
+        hr {{
+            border-color: {border_color} !important;
         }}
         
-        /* File uploader */
-        .stFileUploader > div {{
-            background-color: {theme['secondary_background_color']} !important;
-            border: 2px dashed {theme['border_color']} !important;
-            border-radius: 10px !important;
-        }}
-        
-        /* Success/Error/Warning/Info messages */
-        .stSuccess {{
-            background-color: {theme['success_color']}22 !important;
-            color: {theme['success_color']} !important;
-            border-left: 4px solid {theme['success_color']} !important;
-        }}
-        
-        .stError {{
-            background-color: {theme['error_color']}22 !important;
-            color: {theme['error_color']} !important;
-            border-left: 4px solid {theme['error_color']} !important;
-        }}
-        
-        .stWarning {{
-            background-color: {theme['warning_color']}22 !important;
-            color: {theme['warning_color']} !important;
-            border-left: 4px solid {theme['warning_color']} !important;
-        }}
-        
-        .stInfo {{
-            background-color: {theme['info_color']}22 !important;
-            color: {theme['info_color']} !important;
-            border-left: 4px solid {theme['info_color']} !important;
-        }}
-        
-        /* Radio buttons */
-        .stRadio > div {{
-            background-color: {theme['secondary_background_color']} !important;
-            padding: 10px !important;
-            border-radius: 8px !important;
-            border: 1px solid {theme['border_color']} !important;
-        }}
-        
-        /* Input fields */
-        .stTextInput > div > div > input {{
-            background-color: {theme['secondary_background_color']} !important;
-            color: {theme['text_color']} !important;
-            border-color: {theme['border_color']} !important;
-        }}
-        
-        /* Chat input */
-        .stChatInput > div {{
-            background-color: {theme['secondary_background_color']} !important;
-            border-color: {theme['border_color']} !important;
+        /* ===== CHAT INPUT ===== */
+        .stChatInput {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
         }}
         
         .stChatInput input {{
-            background-color: {theme['secondary_background_color']} !important;
-            color: {theme['text_color']} !important;
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
         }}
         
-        /* Plotly charts background */
+        /* ===== EXPANDER ===== */
+        .streamlit-expanderHeader {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* ===== RADIO BUTTONS ===== */
+        .stRadio > div {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* ===== CHECKBOX ===== */
+        .stCheckbox > label {{
+            color: {text_color} !important;
+        }}
+        
+        /* ===== PLOTS ===== */
         .js-plotly-plot {{
-            background-color: {theme['background_color']} !important;
+            background-color: {bg_color} !important;
         }}
         
-        /* Sidebar dividers */
-        .css-1d391kg hr {{
-            border-color: {theme['border_color']} !important;
-        }}
-        
-        /* Dark mode specific adjustments */
-        {'' if theme_name == 'light' else '''
-        /* Dark mode scrollbar */
+        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar {{
-            background-color: #161b22;
+            background-color: {sidebar_color} !important;
         }}
+        
         ::-webkit-scrollbar-thumb {{
-            background-color: #30363d;
+            background-color: {border_color} !important;
         }}
+        
         ::-webkit-scrollbar-thumb:hover {{
-            background-color: #484f58;
+            background-color: {primary_color} !important;
         }}
-        '''}
+        
+        /* ===== CODE BLOCKS ===== */
+        pre, code {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* ===== SIDEBAR CHILDREN ===== */
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] {{
+            color: {text_color} !important;
+        }}
+        
+        [data-testid="stSidebar"] .stMetric {{
+            color: {text_color} !important;
+        }}
     </style>
     """
     return css
