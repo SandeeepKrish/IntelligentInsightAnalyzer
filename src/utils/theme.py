@@ -119,12 +119,30 @@ def apply_theme_styles(theme_name: str) -> str:
             color: {text_color} !important;
         }}
         
-        /* ===== SIDEBAR STYLING ===== */
+        /* ===== SIDEBAR STYLING - CATCH ALL WHITE BOXES ===== */
         [data-testid="stSidebar"] {{
             background-color: {sidebar_color} !important;
         }}
         
+        [data-testid="stSidebar"] > * {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
         [data-testid="stSidebar"] * {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Force all divs in sidebar */
+        [data-testid="stSidebar"] div {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Force all sections in sidebar */
+        [data-testid="stSidebar"] section {{
+            background-color: {sidebar_color} !important;
             color: {text_color} !important;
         }}
         
@@ -144,6 +162,45 @@ def apply_theme_styles(theme_name: str) -> str:
         }}
         
         p, span, div, label, th, td {{
+            color: {text_color} !important;
+        }}
+        
+        /* ===== FILE UPLOADER - AGGRESSIVE TARGETING ===== */
+        .stFileUploader {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        .stFileUploader > div {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        .stFileUploader > div > div {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        .stFileUploader > div > div > div {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        [data-testid="stFileUploadDropzone"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Target all nested elements in file uploader */
+        [data-testid="stFileUploadDropzone"] * {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Shadow DOM piercing attempt */
+        .stFileUploader ::shadow {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        /* Direct element styling */
+        .uploadedFile {{
+            background-color: {sidebar_color} !important;
             color: {text_color} !important;
         }}
         
@@ -192,27 +249,15 @@ def apply_theme_styles(theme_name: str) -> str:
             background-color: {sidebar_color} !important;
         }}
         
+        [data-baseweb="file-uploader"] * {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
         /* ===== SELECT & DROPDOWN ===== */
         .stSelectbox > div > div {{
             background-color: {bg_color} !important;
             color: {text_color} !important;
-        }}
-        
-        /* ===== FILE UPLOADER ===== */
-        .stFileUploader {{
-            background-color: {sidebar_color} !important;
-        }}
-        
-        .stFileUploader > div {{
-            background-color: {sidebar_color} !important;
-        }}
-        
-        [data-testid="stFileUploadDropzone"] {{
-            background-color: {sidebar_color} !important;
-        }}
-        
-        [data-testid="stFileUploadDropzone"] * {{
-            background-color: {sidebar_color} !important;
         }}
         
         /* ===== METRICS ===== */
