@@ -174,6 +174,24 @@ def apply_theme_styles(theme_name: str) -> str:
             border: 1px solid {border_color} !important;
         }}
         
+        input[type="text"],
+        input[type="file"],
+        input[type="number"],
+        textarea {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        
+        /* ===== DROPZONE SPECIFIC ===== */
+        [data-baseweb="file-uploader"] {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        [data-baseweb="file-uploader"] > div {{
+            background-color: {sidebar_color} !important;
+        }}
+        
         /* ===== SELECT & DROPDOWN ===== */
         .stSelectbox > div > div {{
             background-color: {bg_color} !important;
@@ -182,6 +200,18 @@ def apply_theme_styles(theme_name: str) -> str:
         
         /* ===== FILE UPLOADER ===== */
         .stFileUploader {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        .stFileUploader > div {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        [data-testid="stFileUploadDropzone"] {{
+            background-color: {sidebar_color} !important;
+        }}
+        
+        [data-testid="stFileUploadDropzone"] * {{
             background-color: {sidebar_color} !important;
         }}
         
