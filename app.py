@@ -34,6 +34,110 @@ from components import (
 
 
 # ============================================================================
+# Navbar Styling Function
+# ============================================================================
+
+def apply_navbar_styling():
+    """Apply sticky navbar styling based on theme"""
+    theme = "dark" if st.session_state.get("theme") == "dark" else "light"
+    
+    if theme == "dark":
+        navbar_css = """
+        <style>
+            /* ===== STICKY NAVBAR - DARK MODE ===== */
+            .navbar-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background-color: #0e1117 !important;
+                border-bottom: 2px solid #30363d !important;
+                padding: 16px 32px !important;
+                z-index: 999 !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+            }
+            
+            .navbar-content {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            
+            .navbar-title {
+                margin: 0 !important;
+                padding: 0 !important;
+                color: #e6edf3 !important;
+                font-size: 28px !important;
+                font-weight: 700 !important;
+            }
+            
+            .navbar-subtitle {
+                margin: 4px 0 0 0 !important;
+                padding: 0 !important;
+                color: #8b949e !important;
+                font-size: 14px !important;
+            }
+            
+            /* Add margin to main content to account for fixed navbar */
+            .stApp > [data-testid="stDecoration"] {
+                margin-top: 120px !important;
+            }
+            
+            .main .block-container {
+                margin-top: 120px !important;
+            }
+        </style>
+        """
+    else:
+        navbar_css = """
+        <style>
+            /* ===== STICKY NAVBAR - LIGHT MODE ===== */
+            .navbar-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background-color: #ffffff !important;
+                border-bottom: 2px solid #d3d3d3 !important;
+                padding: 16px 32px !important;
+                z-index: 999 !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            }
+            
+            .navbar-content {
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+            
+            .navbar-title {
+                margin: 0 !important;
+                padding: 0 !important;
+                color: #262730 !important;
+                font-size: 28px !important;
+                font-weight: 700 !important;
+            }
+            
+            .navbar-subtitle {
+                margin: 4px 0 0 0 !important;
+                padding: 0 !important;
+                color: #666666 !important;
+                font-size: 14px !important;
+            }
+            
+            /* Add margin to main content to account for fixed navbar */
+            .stApp > [data-testid="stDecoration"] {
+                margin-top: 120px !important;
+            }
+            
+            .main .block-container {
+                margin-top: 120px !important;
+            }
+        </style>
+        """
+    
+    st.markdown(navbar_css, unsafe_allow_html=True)
+
+
+# ============================================================================
 # Page Configuration
 # ============================================================================
 
@@ -44,8 +148,18 @@ st.set_page_config(
     initial_sidebar_state=AppConfig.SIDEBAR_STATE
 )
 
-st.title("🔬 IntelligentInsightAnalyzer")
-st.caption("AI-powered multi-domain data analysis with advanced temporal and aggregation analytics")
+# Apply sticky navbar styling
+apply_navbar_styling()
+
+# Sticky navbar with title
+st.markdown("""
+    <div class="navbar-container">
+        <div class="navbar-content">
+            <h1 class="navbar-title">🔬 IntelligentInsightAnalyzer</h1>
+            <p class="navbar-subtitle">AI-powered multi-domain data analysis with advanced temporal and aggregation analytics</p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 
 # ============================================================================
