@@ -333,45 +333,8 @@ def apply_theme_styles(theme_name: str) -> str:
             border-color: {border_color} !important;
         }}
         
-        /* ===== CHAT INPUT ===== */
-        .stChatInput {{
-            background-color: {bg_color} !important;
-            color: {text_color} !important;
-        }}
-        
-        .stChatInput input {{
-            background-color: {sidebar_color} !important;
-            color: {text_color} !important;
-            border: 2px solid {border_color} !important;
-            border-radius: 10px !important;
-            padding: 12px 16px !important;
-        }}
-        
-        .stChatInput input::placeholder {{
-            color: {text_color}99 !important;
-        }}
-        
-        /* ===== SEND BUTTON - GREEN ===== */
-        [data-testid="chatInputSubmitButton"] {{
-            background-color: #238636 !important;
-            border: none !important;
-            border-radius: 8px !important;
-        }}
-        
-        [data-testid="chatInputSubmitButton"] button {{
-            background-color: #238636 !important;
-            color: white !important;
-            border: none !important;
-        }}
-        
-        [data-testid="chatInputSubmitButton"] button:hover {{
-            background-color: #2ea043 !important;
-        }}
-        
-        [data-testid="chatInputSubmitButton"] svg {{
-            fill: white !important;
-            stroke: white !important;
-        }}
+        /* ===== CHAT INPUT - STYLED IN CHAT COMPONENT ===== */
+        /* (Primary styling in chat_interface.py apply_chat_styling) */
         
         /* ===== EXPANDER ===== */
         .streamlit-expanderHeader {{

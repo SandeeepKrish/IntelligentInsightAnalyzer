@@ -74,87 +74,110 @@ def apply_chat_styling():
     theme = "dark" if st.session_state.get("theme") == "dark" else "light"
     
     if theme == "dark":
-        # Dark mode styling
+        # Dark mode styling - AGGRESSIVE BLACK INPUT BOX
         chat_css = """
         <style>
-            /* ===== REMOVE NESTED BOXES - FLAT DESIGN ===== */
-            [data-testid="stChatMessage"] {
-                background-color: #161b22 !important;
-                border: 1px solid #30363d !important;
-                border-radius: 12px !important;
-                padding: 16px !important;
-                margin: 8px 0 !important;
-            }
-            
-            /* Remove inner container backgrounds */
-            [data-testid="stChatMessage"] > div {
-                background-color: transparent !important;
-            }
-            
-            /* Chat message text - white */
-            [data-testid="stChatMessage"] * {
-                background-color: transparent !important;
-                color: #e6edf3 !important;
-            }
-            
-            /* Ensure text is white */
-            [data-testid="stChatMessage"] p,
-            [data-testid="stChatMessage"] span,
-            [data-testid="stChatMessage"] div {
-                color: #e6edf3 !important;
-            }
-            
-            /* ===== CHAT INPUT STYLING ===== */
+            /* ===== CHAT INPUT CONTAINER - ALL BLACK ===== */
             .stChatInput {
-                background-color: #0e1117 !important;
+                background-color: transparent !important;
             }
             
-            .stChatInput input {
+            /* Input wrapper */
+            .stChatInput > div {
+                background-color: #0e1117 !important;
+                padding: 12px !important;
+                border-radius: 10px !important;
+                border: 1px solid #30363d !important;
+            }
+            
+            /* ===== INPUT BOX - COMPLETELY BLACK ===== */
+            .stChatInput input,
+            [data-testid="stChatInputTextArea"] input {
+                background-color: #0a0e13 !important;
+                color: #e6edf3 !important;
+                border: none !important;
+                caret-color: #58a6ff !important;
+                font-size: 16px !important;
+                padding: 12px 16px !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Focus state */
+            .stChatInput input:focus,
+            [data-testid="stChatInputTextArea"] input:focus {
                 background-color: #161b22 !important;
                 color: #e6edf3 !important;
-                border: 2px solid #30363d !important;
-                border-radius: 10px !important;
+                border: 2px solid #58a6ff !important;
+                outline: none !important;
+            }
+            
+            /* Placeholder text - white */
+            .stChatInput input::placeholder,
+            [data-testid="stChatInputTextArea"] input::placeholder {
+                color: #8b949e !important;
+                opacity: 1 !important;
+            }
+            
+            /* Text area styling */
+            textarea {
+                background-color: #0a0e13 !important;
+                color: #e6edf3 !important;
+                caret-color: #58a6ff !important;
+                border: none !important;
+                border-radius: 8px !important;
                 padding: 12px 16px !important;
             }
             
-            .stChatInput input::placeholder {
-                color: #8b949e !important;
+            textarea:focus {
+                background-color: #161b22 !important;
+                border: 2px solid #58a6ff !important;
+                outline: none !important;
             }
             
-            /* ===== SEND BUTTON - GREEN ARROW ===== */
+            textarea::placeholder {
+                color: #8b949e !important;
+                opacity: 1 !important;
+            }
+            
+            /* ===== SEND BUTTON - PROFESSIONAL GREEN ARROW ===== */
             [data-testid="chatInputSubmitButton"] {
-                background-color: #238636 !important;
+                background-color: transparent !important;
                 border: none !important;
-                border-radius: 8px !important;
-                padding: 10px 12px !important;
+                padding: 8px 12px !important;
             }
             
             [data-testid="chatInputSubmitButton"] button {
                 background-color: #238636 !important;
                 color: white !important;
                 border: none !important;
+                border-radius: 8px !important;
+                padding: 10px 14px !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
             }
             
             [data-testid="chatInputSubmitButton"] button:hover {
                 background-color: #2ea043 !important;
+                transform: scale(1.05) !important;
             }
             
+            [data-testid="chatInputSubmitButton"] button:active {
+                background-color: #1f6feb !important;
+            }
+            
+            /* Arrow icon styling */
             [data-testid="chatInputSubmitButton"] svg {
                 fill: white !important;
                 stroke: white !important;
+                width: 20px !important;
+                height: 20px !important;
             }
             
-            /* ===== ASSISTANT MESSAGE SPECIFIC ===== */
-            .stChatMessage[data-testid="assistant-message"] {
-                background: linear-gradient(135deg, #161b22, #0d1117) !important;
-                border-left: 4px solid #238636 !important;
-            }
-            
-            /* ===== USER MESSAGE SPECIFIC ===== */
-            .stChatMessage[data-testid="user-message"] {
-                background: linear-gradient(135deg, #1f6feb, #0d47a1) !important;
-                border-left: 4px solid #58a6ff !important;
-                margin-left: 20px !important;
+            /* ===== CURSOR STYLING ===== */
+            input::selection,
+            textarea::selection {
+                background-color: #58a6ff !important;
+                color: #0a0e13 !important;
             }
         </style>
         """
@@ -162,84 +185,107 @@ def apply_chat_styling():
         # Light mode styling
         chat_css = """
         <style>
-            /* ===== REMOVE NESTED BOXES - FLAT DESIGN ===== */
-            [data-testid="stChatMessage"] {
-                background-color: #f0f2f6 !important;
-                border: 1px solid #d3d3d3 !important;
-                border-radius: 12px !important;
-                padding: 16px !important;
-                margin: 8px 0 !important;
-            }
-            
-            /* Remove inner container backgrounds */
-            [data-testid="stChatMessage"] > div {
-                background-color: transparent !important;
-            }
-            
-            /* Chat message text - dark */
-            [data-testid="stChatMessage"] * {
-                background-color: transparent !important;
-                color: #262730 !important;
-            }
-            
-            /* Ensure text is dark */
-            [data-testid="stChatMessage"] p,
-            [data-testid="stChatMessage"] span,
-            [data-testid="stChatMessage"] div {
-                color: #262730 !important;
-            }
-            
-            /* ===== CHAT INPUT STYLING ===== */
+            /* ===== CHAT INPUT CONTAINER - LIGHT ===== */
             .stChatInput {
-                background-color: #ffffff !important;
+                background-color: transparent !important;
             }
             
-            .stChatInput input {
+            /* Input wrapper */
+            .stChatInput > div {
+                background-color: #ffffff !important;
+                padding: 12px !important;
+                border-radius: 10px !important;
+                border: 1px solid #d3d3d3 !important;
+            }
+            
+            /* ===== INPUT BOX - WHITE WITH DARK TEXT ===== */
+            .stChatInput input,
+            [data-testid="stChatInputTextArea"] input {
+                background-color: #ffffff !important;
+                color: #262730 !important;
+                border: none !important;
+                caret-color: #0066cc !important;
+                font-size: 16px !important;
+                padding: 12px 16px !important;
+                border-radius: 8px !important;
+            }
+            
+            /* Focus state */
+            .stChatInput input:focus,
+            [data-testid="stChatInputTextArea"] input:focus {
                 background-color: #f0f2f6 !important;
                 color: #262730 !important;
-                border: 2px solid #d3d3d3 !important;
-                border-radius: 10px !important;
+                border: 2px solid #0066cc !important;
+                outline: none !important;
+            }
+            
+            /* Placeholder text */
+            .stChatInput input::placeholder,
+            [data-testid="stChatInputTextArea"] input::placeholder {
+                color: #8b949e !important;
+                opacity: 1 !important;
+            }
+            
+            /* Text area styling */
+            textarea {
+                background-color: #ffffff !important;
+                color: #262730 !important;
+                caret-color: #0066cc !important;
+                border: none !important;
+                border-radius: 8px !important;
                 padding: 12px 16px !important;
             }
             
-            .stChatInput input::placeholder {
-                color: #8b949e !important;
+            textarea:focus {
+                background-color: #f0f2f6 !important;
+                border: 2px solid #0066cc !important;
+                outline: none !important;
             }
             
-            /* ===== SEND BUTTON - GREEN ARROW ===== */
+            textarea::placeholder {
+                color: #8b949e !important;
+                opacity: 1 !important;
+            }
+            
+            /* ===== SEND BUTTON - GREEN ===== */
             [data-testid="chatInputSubmitButton"] {
-                background-color: #28a745 !important;
+                background-color: transparent !important;
                 border: none !important;
-                border-radius: 8px !important;
-                padding: 10px 12px !important;
+                padding: 8px 12px !important;
             }
             
             [data-testid="chatInputSubmitButton"] button {
                 background-color: #28a745 !important;
                 color: white !important;
                 border: none !important;
+                border-radius: 8px !important;
+                padding: 10px 14px !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
             }
             
             [data-testid="chatInputSubmitButton"] button:hover {
                 background-color: #218838 !important;
+                transform: scale(1.05) !important;
             }
             
+            [data-testid="chatInputSubmitButton"] button:active {
+                background-color: #0066cc !important;
+            }
+            
+            /* Arrow icon styling */
             [data-testid="chatInputSubmitButton"] svg {
                 fill: white !important;
                 stroke: white !important;
+                width: 20px !important;
+                height: 20px !important;
             }
             
-            /* ===== ASSISTANT MESSAGE SPECIFIC ===== */
-            .stChatMessage[data-testid="assistant-message"] {
-                background: linear-gradient(135deg, #f0f2f6, #ffffff) !important;
-                border-left: 4px solid #28a745 !important;
-            }
-            
-            /* ===== USER MESSAGE SPECIFIC ===== */
-            .stChatMessage[data-testid="user-message"] {
-                background: linear-gradient(135deg, #e3f2fd, #c8e6c9) !important;
-                border-left: 4px solid #0066cc !important;
-                margin-left: 20px !important;
+            /* ===== CURSOR STYLING ===== */
+            input::selection,
+            textarea::selection {
+                background-color: #0066cc !important;
+                color: white !important;
             }
         </style>
         """
