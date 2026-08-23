@@ -119,6 +119,12 @@ def apply_theme_styles(theme_name: str) -> str:
             color: {text_color} !important;
         }}
         
+        /* Remove white top bar in dark mode */
+        [data-testid="stDecoration"] {{
+            background-color: {bg_color} !important;
+            display: none !important;
+        }}
+        
         /* ===== SIDEBAR STYLING - CATCH ALL WHITE BOXES ===== */
         [data-testid="stSidebar"] {{
             background-color: {sidebar_color} !important;
@@ -146,7 +152,42 @@ def apply_theme_styles(theme_name: str) -> str:
             color: {text_color} !important;
         }}
         
-        /* ===== MAIN CONTENT ===== */
+        /* ===== NAVBAR/HEADER BAR - ALL BLACK ===== */
+        header {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        [data-testid="stHeader"] {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Top bar background */
+        .stApp header {{
+            background-color: {bg_color} !important;
+        }}
+        
+        /* Streamlit header styling */
+        .stApp > [data-testid="stDecoration"] {{
+            background-color: {bg_color} !important;
+        }}
+        
+        /* Header elements */
+        header svg {{
+            fill: {text_color} !important;
+            stroke: {text_color} !important;
+        }}
+        
+        header button {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        
+        header button:hover {{
+            background-color: {border_color} !important;
+        }}
         .main {{
             background-color: {bg_color} !important;
         }}
