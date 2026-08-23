@@ -47,11 +47,6 @@ st.set_page_config(
 st.title("🔬 IntelligentInsightAnalyzer")
 st.caption("AI-powered multi-domain data analysis with advanced temporal and aggregation analytics")
 
-# Apply custom theme
-if "theme" not in st.session_state:
-    st.session_state.theme = "light"
-apply_custom_theme(st.session_state.theme)
-
 
 # ============================================================================
 # Initialize Session State
@@ -147,8 +142,12 @@ with st.sidebar:
 
 
 # ============================================================================
-# Main Content Area
+# Apply Theme (Must be after theme toggle in sidebar)
 # ============================================================================
+
+if "theme" not in st.session_state:
+    st.session_state.theme = "light"
+apply_custom_theme(st.session_state.theme)
 
 # Check if file is loaded
 file_loaded = st.session_state.get("file_loaded", False)

@@ -22,24 +22,27 @@ def render_theme_toggle():
     st.sidebar.divider()
     st.sidebar.markdown("### 🎨 Appearance")
     
-    # Theme selection
-    theme_options = {"☀️ Light": "light", "🌙 Dark": "dark"}
-    selected_label = [k for k, v in theme_options.items() if v == st.session_state.theme][0]
+    # Theme selection using columns for better layout
+    col1, col2 = st.sidebar.columns(2)
     
-    # Radio button for theme selection
-    selected_theme = st.sidebar.radio(
-        "Theme",
-        options=list(theme_options.keys()),
-        index=list(theme_options.keys()).index(selected_label),
-        key="theme_radio",
-        label_visibility="collapsed"
-    )
+    with col1:
+        light_clicked = st.button("☀️ Light", use_container_width=True, key="light_theme_btn")
     
-    # Update session state
-    new_theme = theme_options[selected_theme]
-    if new_theme != st.session_state.theme:
-        st.session_state.theme = new_theme
+    with col2:
+        dark_clicked = st.button("🌙 Dark", use_container_width=True, key="dark_theme_btn")
+    
+    # Handle theme change
+    if light_clicked and st.session_state.theme != "light":
+        st.session_state.theme = "light"
         st.rerun()
+    
+    if dark_clicked and st.session_state.theme != "dark":
+        st.session_state.theme = "dark"
+        st.rerun()
+    
+    # Show current theme
+    current_theme_display = "☀️ Light Mode" if st.session_state.theme == "light" else "🌙 Dark Mode"
+    st.sidebar.info(f"Current: {current_theme_display}")
     
     return st.session_state.theme
 
