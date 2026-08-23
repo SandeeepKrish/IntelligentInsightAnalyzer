@@ -53,37 +53,37 @@ st.caption("AI-powered multi-domain data analysis with advanced temporal and agg
 @st.cache_resource
 def get_analyzer_service():
     """Initialize the analyzer service (cached for session)"""
-    try:
-        return AnalyzerService()
-    except ValueError as e:
-        st.error(f"❌ {str(e)}")
-        st.stop()
+    return AnalyzerService()
 
 
-# Get service
+# Get service with better error handling
 try:
     service = get_analyzer_service()
+except SystemExit:
+    # SystemExit is raised by st.stop() - let it pass through
+    st.stop()
 except Exception as e:
     st.error(f"❌ Initialization Error: {str(e)}")
     st.info("""
     ### ⚙️ Setup Required
     
-    To use IntelligentInsightAnalyzer, you need to:
+    To use IntelligentInsightAnalyzer, you need to configure your OpenAI API key:
     
-    1. **Add your OpenAI API key** to Streamlit Cloud Secrets:
-       - Click the menu (⋯) → Settings → Secrets
-       - Add: `OPENAI_API_KEY = "sk-..."`
-       - Click Save and wait 1 minute
-       - Refresh this page
+    **For Streamlit Cloud Deployment:**
+    1. Click the menu (⋯) → Settings → Secrets
+    2. Add: `OPENAI_API_KEY = "sk-proj-..."`
+    3. Click Save and wait 1 minute
+    4. Refresh this page
     
-    2. **Get an OpenAI API key:**
-       - Visit: https://platform.openai.com/api-keys
-       - Create a new API key
-       - Copy the key starting with `sk-`
+    **Get an OpenAI API key:**
+    - Visit: https://platform.openai.com/api-keys
+    - Create a new API key (starts with `sk-proj-`)
+    - Copy the complete key
     
-    3. **Add to Streamlit Cloud Secrets:**
-       - Settings → Secrets
-       - Paste in TOML format: `OPENAI_API_KEY = "sk-..."`
+    **Format for Streamlit Secrets:**
+    ```
+    OPENAI_API_KEY = "sk-proj-your-key-here"
+    ```
     """)
     st.stop()
 

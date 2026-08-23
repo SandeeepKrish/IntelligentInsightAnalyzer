@@ -6,6 +6,7 @@ Business logic layer that coordinates between utils and UI components
 import pandas as pd
 import io
 import os
+import streamlit as st
 from typing import Dict, Any, Generator
 
 from config import AppConfig
@@ -22,21 +23,49 @@ class AnalyzerService:
             system_context=AppConfig.SYSTEM_PROMPT
         )
         
-        # Check if API key exists
-        api_key = os.getenv("OPENAI_API_KEY")
+        # Check multiple sources for API key
+        api_key = None
+        
+        # 1. Try Streamlit secrets first (for deployment)
+        try:
+            api_key = st.secrets.get("OPENAI_API_KEY")
+        except:
+            pass
+        
+        # 2. Try environment variables (for local development)
         if not api_key:
-            import streamlit as st
+            api_key = os.getenv("OPENAI_API_KEY")
+        
+        # 3. Try config file
+        if not api_key:
+            api_key = AppConfig.OPENAI_API_KEY
+        
+        if not api_key:
             st.error("❌ OPENAI_API_KEY not found. Please add it to Streamlit Cloud Secrets.")
+            st.info("""
+            ### ⚙️ Setup Required
+            
+            1. **Add your OpenAI API key** to Streamlit Cloud Secrets:
+               - Click the menu (⋯) → Settings → Secrets
+               - Add: `OPENAI_API_KEY = "sk-proj-..."`
+               - Click Save and wait 1 minute
+               - Refresh this page
+            
+            2. **Get an OpenAI API key:**
+               - Visit: https://platform.openai.com/api-keys
+               - Create a new API key
+               - Copy the key starting with `sk-proj-`
+            """)
             st.stop()
         
         try:
             self.llm = StreamingLLM(
                 model=AppConfig.OPENAI_MODEL,
                 temperature=AppConfig.OPENAI_TEMPERATURE,
-                max_tokens=AppConfig.OPENAI_MAX_TOKENS
+                max_tokens=AppConfig.OPENAI_MAX_TOKENS,
+                api_key=api_key  # Pass key directly
             )
         except ValueError as e:
-            import streamlit as st
             st.error(f"❌ LLM initialization failed: {str(e)}")
             st.stop()
         

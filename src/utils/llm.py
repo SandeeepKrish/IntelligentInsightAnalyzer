@@ -13,7 +13,7 @@ load_dotenv()
 class StreamingLLM:
     """Wrapper for OpenAI API with streaming capabilities"""
     
-    def __init__(self, model: str = "gpt-3.5-turbo", temperature: float = 0.7, max_tokens: int = 500):
+    def __init__(self, model: str = "gpt-3.5-turbo", temperature: float = 0.7, max_tokens: int = 500, api_key: str = None):
         """
         Initialize LLM client
         
@@ -21,8 +21,11 @@ class StreamingLLM:
             model: OpenAI model name
             temperature: Response creativity (0-1)
             max_tokens: Maximum response length
+            api_key: OpenAI API key (optional, will try environment if not provided)
         """
-        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            api_key = os.getenv("OPENAI_API_KEY")
+        
         if not api_key:
             raise ValueError("OPENAI_API_KEY not found in environment variables")
         
