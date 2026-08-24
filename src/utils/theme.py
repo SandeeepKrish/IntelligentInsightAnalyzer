@@ -353,9 +353,114 @@ def apply_theme_styles(theme_name: str) -> str:
             color: {text_color} !important;
         }}
         
-        /* ===== SELECT & DROPDOWN ===== */
+        /* ===== SELECT & DROPDOWN - COMPREHENSIVE STYLING ===== */
+        /* Main selectbox container */
+        .stSelectbox {{
+            color: {text_color} !important;
+        }}
+        
+        .stSelectbox > div {{
+            color: {text_color} !important;
+        }}
+        
         .stSelectbox > div > div {{
             background-color: {bg_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        
+        /* Selectbox input field */
+        .stSelectbox input {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        
+        /* Dropdown list when opened - BaseWeb dropdown */
+        [role="listbox"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        
+        [role="option"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        [role="option"]:hover {{
+            background-color: {border_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        [role="option"][aria-selected="true"] {{
+            background-color: {primary_color} !important;
+            color: white !important;
+        }}
+        
+        /* BaseWeb Select/Dropdown components */
+        [data-baseweb="select"] {{
+            background-color: {bg_color} !important;
+        }}
+        
+        [data-baseweb="select"] input {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        
+        [data-baseweb="popover"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Dropdown popover list items */
+        [data-baseweb="select"] [role="option"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        [data-baseweb="select"] [role="option"]:hover {{
+            background-color: {border_color} !important;
+        }}
+        
+        [data-baseweb="select"] [role="option"][aria-selected="true"] {{
+            background-color: {primary_color} !important;
+            color: white !important;
+        }}
+        
+        /* MultiSelect dropdown */
+        [data-baseweb="multi-select"] {{
+            background-color: {bg_color} !important;
+        }}
+        
+        [data-baseweb="multi-select"] input {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        /* Dropdown menu ul/li */
+        ul[role="listbox"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        li[role="option"] {{
+            background-color: {sidebar_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        li[role="option"]:hover {{
+            background-color: {border_color} !important;
+        }}
+        
+        /* SVG arrows in dropdowns */
+        [data-baseweb="select"] svg {{
+            fill: {text_color} !important;
+        }}
+        
+        /* All divs within select */
+        .stSelectbox * {{
             color: {text_color} !important;
         }}
         
@@ -414,15 +519,46 @@ def apply_theme_styles(theme_name: str) -> str:
             color: {text_color} !important;
         }}
         
+        /* ===== MULTISELECT ===== */
+        .stMultiSelect {{
+            color: {text_color} !important;
+        }}
+        
+        .stMultiSelect > div {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+            border: 1px solid {border_color} !important;
+        }}
+        
+        .stMultiSelect > div > div {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+        }}
+        
+        .stMultiSelect input {{
+            background-color: {bg_color} !important;
+            color: {text_color} !important;
+        }}
+        
         /* ===== RADIO BUTTONS ===== */
         .stRadio > div {{
             background-color: {sidebar_color} !important;
             color: {text_color} !important;
         }}
         
+        .stRadio [role="radio"] {{
+            background-color: {bg_color} !important;
+            border-color: {border_color} !important;
+        }}
+        
         /* ===== CHECKBOX ===== */
         .stCheckbox > label {{
             color: {text_color} !important;
+        }}
+        
+        .stCheckbox [role="checkbox"] {{
+            background-color: {bg_color} !important;
+            border-color: {border_color} !important;
         }}
         
         /* ===== PLOTS ===== */
