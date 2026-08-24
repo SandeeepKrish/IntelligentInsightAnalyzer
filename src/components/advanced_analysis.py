@@ -225,7 +225,7 @@ def render_advanced_analysis(service: AnalyzerService):
         with col2:
             year_col = st.selectbox(
                 "Select Year Column",
-                analysis_engine.categorical_cols,
+                analysis_engine.categorical_cols + analysis_engine.numeric_cols,
                 key="year_col_select"
             )
         
