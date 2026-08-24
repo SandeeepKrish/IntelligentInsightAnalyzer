@@ -124,19 +124,6 @@ with st.sidebar:
             st.error(f"❌ Error loading file: {str(e)}")
             st.session_state.file_loaded = False
     
-    # Conversation controls
-    st.divider()
-    st.header("💬 Conversation")
-    
-    if st.button("🔄 Clear Chat History"):
-        service.clear_conversation()
-        st.success("✅ Chat history cleared!")
-        st.rerun()
-    
-    if st.session_state.get("file_loaded", False):
-        summary = service.get_conversation_summary()
-        st.caption(f"📊 Messages in chat: {summary['total_messages']}")
-    
     # PDF Upload Section
     st.divider()
     st.header("📄 PDF Documents")
@@ -171,6 +158,19 @@ with st.sidebar:
             service.clear_pdfs()
             st.success("✅ All PDFs cleared!")
             st.rerun()
+    
+    # Conversation controls
+    st.divider()
+    st.header("💬 Conversation")
+    
+    if st.button("🔄 Clear Chat History"):
+        service.clear_conversation()
+        st.success("✅ Chat history cleared!")
+        st.rerun()
+    
+    if st.session_state.get("file_loaded", False):
+        summary = service.get_conversation_summary()
+        st.caption(f"📊 Messages in chat: {summary['total_messages']}")
     
     # Theme toggle at the bottom of sidebar
     render_theme_toggle()
