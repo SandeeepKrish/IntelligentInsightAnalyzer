@@ -202,16 +202,10 @@ def render_advanced_analysis(service: AnalyzerService):
                     st.error(f"❌ Error: {str(e)}")
     
     # ====================================================================
-    # 1. GROUP & AGGREGATE (Original)
-    # ====================================================================
-    
-    elif analysis_type == "📊 Group & Aggregate":
-    
-    # ====================================================================
     # 1. GROUP & AGGREGATE
     # ====================================================================
     
-    if analysis_type == "📊 Group & Aggregate":
+    elif analysis_type == "📊 Group & Aggregate":
         st.subheader("📊 Group & Aggregate Analysis")
         st.write("Group your data by a column and aggregate using different methods")
         
