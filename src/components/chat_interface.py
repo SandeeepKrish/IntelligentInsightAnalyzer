@@ -26,21 +26,26 @@ def render_chat_interface(service: AnalyzerService):
         col1, col2 = st.columns([3, 1])
         
         with col1:
+            # Create list with "None" option for deselection
+            pdf_options = [None] + pdf_names
+            current_pdf = service.get_current_pdf()
+            
+            # Find the current index
+            current_index = 0
+            if current_pdf and current_pdf in pdf_names:
+                current_index = pdf_options.index(current_pdf)
+            
             selected_pdf = st.selectbox(
                 "Select a PDF to include in analysis:",
-                pdf_names,
-                index=0 if service.get_current_pdf() not in pdf_names else pdf_names.index(service.get_current_pdf()),
+                pdf_options,
+                index=current_index,
+                format_func=lambda x: "None (No PDF selected)" if x is None else x,
                 key="chat_pdf_selector",
                 help="The selected PDF content will be included in your chat analysis"
             )
             
-            if selected_pdf:
-                service.set_current_pdf(selected_pdf)
-        
-        with col2:
-            if st.button("❌ Deselect", key="deselect_pdf_btn"):
-                service.set_current_pdf(None)
-                st.rerun()
+            # Update service with selection
+            service.set_current_pdf(selected_pdf)
         
         st.divider()
     
