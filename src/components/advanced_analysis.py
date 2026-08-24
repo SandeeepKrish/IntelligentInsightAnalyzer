@@ -28,7 +28,9 @@ def render_advanced_analysis(service: AnalyzerService):
     
     analysis_engine = AnalysisEngine(df)
     
-    # Sidebar for analysis selection
+    # Main analysis selector
+    st.subheader("🔬 Advanced Analysis")
+    
     analysis_type = st.selectbox(
         "Select Analysis Type",
         [
@@ -38,9 +40,172 @@ def render_advanced_analysis(service: AnalyzerService):
             "🔗 Cross-Tabulation",
             "🔍 Filtered Analysis",
             "📋 Multi-Group Analysis",
-            "📊 Summary Statistics"
+            "📊 Summary Statistics",
+            "⭐ Custom Multi-Dimensional Analysis"
         ]
     )
+    
+    # ====================================================================
+    # CUSTOM MULTI-DIMENSIONAL ANALYSIS (NEW)
+    # ====================================================================
+    
+    if analysis_type == "⭐ Custom Multi-Dimensional Analysis":
+        st.markdown("### ⭐ Custom Multi-Dimensional Analysis")
+        st.write("Create custom analysis by selecting dimensions and metrics")
+        
+        # Main controls
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            group_cols = st.multiselect(
+                "Select Dimension(s) to Group By",
+                analysis_engine.categorical_cols,
+                max_selections=3,
+                help="Pick 1-3 columns to group your data",
+                key="custom_group_cols"
+            )
+        
+        with col2:
+            metric_col = st.selectbox(
+                "Select Metric Column",
+                analysis_engine.numeric_cols,
+                help="The numeric column to analyze",
+                key="custom_metric_col"
+            )
+        
+        with col3:
+            aggregation = st.selectbox(
+                "Aggregation Method",
+                ["sum", "count", "mean", "min", "max", "median"],
+                help="How to aggregate the metric",
+                key="custom_agg"
+            )
+        
+        st.divider()
+        
+        # Additional filters
+        st.markdown("### 🔍 Optional Filters")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            filter_columns = st.multiselect(
+                "Filter by (Optional)",
+                analysis_engine.categorical_cols,
+                max_selections=2,
+                key="custom_filter_cols"
+            )
+        
+        with col2:
+            sort_by = st.selectbox(
+                "Sort Results By",
+                ["Value (High to Low)", "Value (Low to High)", "Group Name (A-Z)", "Group Name (Z-A)"],
+                key="custom_sort"
+            )
+        
+        # Build filter dictionary
+        filters = {}
+        if filter_columns:
+            for col in filter_columns:
+                unique_vals = df[col].unique()
+                selected_vals = st.multiselect(
+                    f"Select values for {col}",
+                    unique_vals,
+                    key=f"custom_filter_{col}"
+                )
+                if selected_vals:
+                    filters[col] = selected_vals
+        
+        st.divider()
+        
+        # Analyze button
+        if st.button("🔍 Run Analysis", key="custom_analyze_btn", use_container_width=True):
+            if not group_cols:
+                st.error("❌ Please select at least one dimension to group by")
+            else:
+                try:
+                    # Apply filters
+                    filtered_df = df.copy()
+                    for col, values in filters.items():
+                        filtered_df = filtered_df[filtered_df[col].isin(values)]
+                    
+                    # Group and aggregate
+                    if aggregation == "count":
+                        result = filtered_df.groupby(group_cols).size().reset_index(name='value')
+                    else:
+                        result = filtered_df.groupby(group_cols)[metric_col].agg(aggregation).reset_index()
+                        result.columns = group_cols + ['value']
+                    
+                    # Sort results
+                    if "High to Low" in sort_by:
+                        result = result.sort_values('value', ascending=False)
+                    elif "Low to High" in sort_by:
+                        result = result.sort_values('value', ascending=True)
+                    elif "Z-A" in sort_by:
+                        result = result.sort_values(group_cols[0], ascending=False)
+                    else:  # A-Z
+                        result = result.sort_values(group_cols[0], ascending=True)
+                    
+                    # Display results
+                    st.markdown(f"### 📊 Results - {' + '.join(group_cols)} by {aggregation.upper()} of {metric_col}")
+                    
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown("#### Results Table")
+                        st.dataframe(result, use_container_width=True, height=400)
+                    
+                    with col2:
+                        st.markdown("#### Summary Stats")
+                        st.metric("Total Groups", len(result))
+                        st.metric("Max Value", f"{result['value'].max():.2f}")
+                        st.metric("Min Value", f"{result['value'].min():.2f}")
+                        st.metric("Avg Value", f"{result['value'].mean():.2f}")
+                    
+                    # Chart
+                    st.markdown("#### Visualization")
+                    
+                    if len(group_cols) == 1:
+                        fig = px.bar(
+                            result,
+                            x=group_cols[0],
+                            y='value',
+                            title=f"{aggregation.title()} of {metric_col} by {group_cols[0]}",
+                            labels={'value': f'{aggregation.title()} Value'},
+                            color='value',
+                            color_continuous_scale='Viridis'
+                        )
+                    else:
+                        fig = px.bar(
+                            result,
+                            x=group_cols[0],
+                            y='value',
+                            color=group_cols[1] if len(group_cols) > 1 else None,
+                            title=f"{aggregation.title()} of {metric_col} by {' + '.join(group_cols)}",
+                            labels={'value': f'{aggregation.title()} Value'},
+                            barmode='group'
+                        )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Export button
+                    csv = result.to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Results as CSV",
+                        data=csv,
+                        file_name=f"analysis_{' + '.join(group_cols)}.csv",
+                        mime="text/csv",
+                        key="custom_download"
+                    )
+                
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+    
+    # ====================================================================
+    # 1. GROUP & AGGREGATE (Original)
+    # ====================================================================
+    
+    elif analysis_type == "📊 Group & Aggregate":
     
     # ====================================================================
     # 1. GROUP & AGGREGATE
