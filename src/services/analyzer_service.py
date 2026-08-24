@@ -26,19 +26,22 @@ class AnalyzerService:
         # Check multiple sources for API key
         api_key = None
         
-        # 1. Try Streamlit secrets first (for deployment - PREFERRED)
+        # 1. Try Streamlit secrets first (for deployment)
         try:
             api_key = st.secrets.get("OPENAI_API_KEY")
-        except (AttributeError, KeyError, FileNotFoundError):
-            # st.secrets not available or key not found
+        except:
             pass
         
         # 2. Try environment variables (for local development)
         if not api_key:
             api_key = os.getenv("OPENAI_API_KEY")
         
+        # 3. Try config file
         if not api_key:
-            st.error("❌ OPENAI_API_KEY not found. Please add it to Streamlit Cloud Secrets or environment variables.")
+            api_key = AppConfig.OPENAI_API_KEY
+        
+        if not api_key:
+            st.error("❌ OPENAI_API_KEY not found. Please add it to Streamlit Cloud Secrets.")
             st.info("""
             ### ⚙️ Setup Required
             

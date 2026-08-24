@@ -5,7 +5,6 @@ Application Configuration Settings
 import os
 from dotenv import load_dotenv
 
-# Load environment variables ONCE at startup
 load_dotenv()
 
 
