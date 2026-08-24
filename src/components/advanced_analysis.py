@@ -41,7 +41,8 @@ def render_advanced_analysis(service: AnalyzerService):
             "🔍 Filtered Analysis",
             "📋 Multi-Group Analysis",
             "📊 Summary Statistics",
-            "⭐ Custom Multi-Dimensional Analysis"
+            "⭐ Custom Multi-Dimensional Analysis",
+            "🚗 Car Sales by Type & Year"
         ]
     )
     
@@ -196,6 +197,196 @@ def render_advanced_analysis(service: AnalyzerService):
                         file_name=f"analysis_{' + '.join(group_cols)}.csv",
                         mime="text/csv",
                         key="custom_download"
+                    )
+                
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+    
+    # ====================================================================
+    # CAR SALES BY TYPE & YEAR
+    # ====================================================================
+    
+    elif analysis_type == "🚗 Car Sales by Type & Year":
+        st.markdown("### 🚗 Car Sales by Type & Year Analysis")
+        st.write("Analyze car sales by type and year with two flexible options")
+        
+        # Detect Car Type and Year columns
+        car_type_col = None
+        year_col = None
+        units_col = None
+        
+        # Auto-detect columns
+        for col in analysis_engine.categorical_cols:
+            col_lower = col.lower()
+            if 'type' in col_lower or 'car' in col_lower or 'model' in col_lower:
+                car_type_col = col
+        
+        for col in analysis_engine.categorical_cols:
+            col_lower = col.lower()
+            if 'year' in col_lower:
+                year_col = col
+        
+        for col in analysis_engine.numeric_cols:
+            col_lower = col.lower()
+            if 'unit' in col_lower or 'sold' in col_lower or 'sales' in col_lower:
+                units_col = col
+        
+        # Allow manual selection if auto-detection didn't work
+        st.markdown("#### Step 1: Configure Columns")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            car_type_col = st.selectbox(
+                "Car Type Column",
+                analysis_engine.categorical_cols,
+                index=analysis_engine.categorical_cols.index(car_type_col) if car_type_col in analysis_engine.categorical_cols else 0,
+                key="car_type_col_select"
+            )
+        
+        with col2:
+            if year_col and year_col in analysis_engine.categorical_cols:
+                year_index = analysis_engine.categorical_cols.index(year_col)
+            else:
+                year_index = 0
+            
+            year_col = st.selectbox(
+                "Year Column",
+                analysis_engine.categorical_cols,
+                index=year_index,
+                key="year_col_select"
+            )
+        
+        with col3:
+            if units_col and units_col in analysis_engine.numeric_cols:
+                units_index = analysis_engine.numeric_cols.index(units_col)
+            else:
+                units_index = 0
+            
+            units_col = st.selectbox(
+                "Units Sold Column",
+                analysis_engine.numeric_cols,
+                index=units_index,
+                key="units_col_select"
+            )
+        
+        st.divider()
+        
+        # Get unique years from data
+        unique_years = sorted(df[year_col].unique())
+        
+        st.markdown("#### Step 2: Choose Analysis Type")
+        
+        analysis_mode = st.radio(
+            "What do you want to analyze?",
+            ["📊 By Car Type (All Years)", "📅 By Year (Select Specific Year)"],
+            horizontal=True,
+            key="car_analysis_mode"
+        )
+        
+        if analysis_mode == "📊 By Car Type (All Years)":
+            st.markdown("### Analysis: Units Sold by Car Type (All Years Combined)")
+            
+            if st.button("📊 Generate Car Type Analysis", key="btn_car_type_analysis"):
+                try:
+                    # Group by car type and sum units
+                    result = df.groupby(car_type_col)[units_col].sum().reset_index()
+                    result.columns = [car_type_col, 'Units Sold']
+                    result = result.sort_values('Units Sold', ascending=False)
+                    
+                    # Display results
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown("#### Results Table")
+                        st.dataframe(result, use_container_width=True)
+                    
+                    with col2:
+                        st.markdown("#### Summary")
+                        st.metric("Total Car Types", len(result))
+                        st.metric("Total Units Sold", int(result['Units Sold'].sum()))
+                        st.metric("Avg Units per Type", int(result['Units Sold'].mean()))
+                    
+                    # Bar chart
+                    st.markdown("#### Bar Chart")
+                    fig = px.bar(
+                        result,
+                        x=car_type_col,
+                        y='Units Sold',
+                        title=f"Total Units Sold by {car_type_col}",
+                        labels={'Units Sold': 'Units Sold'},
+                        color='Units Sold',
+                        color_continuous_scale='Blues'
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Export
+                    csv = result.to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Results as CSV",
+                        data=csv,
+                        file_name=f"car_sales_by_type.csv",
+                        mime="text/csv",
+                        key="car_type_download"
+                    )
+                
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+        
+        else:  # By Year
+            st.markdown("### Analysis: Units Sold by Car Type in a Specific Year")
+            st.write(f"Available years: {', '.join(map(str, unique_years))}")
+            
+            selected_year = st.selectbox(
+                "Select Year",
+                unique_years,
+                key="year_selection"
+            )
+            
+            if st.button("📅 Generate Year Analysis", key="btn_year_analysis"):
+                try:
+                    # Filter by year and group by car type
+                    year_data = df[df[year_col] == selected_year]
+                    result = year_data.groupby(car_type_col)[units_col].sum().reset_index()
+                    result.columns = [car_type_col, 'Units Sold']
+                    result = result.sort_values('Units Sold', ascending=False)
+                    
+                    # Display results
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown("#### Results Table")
+                        st.dataframe(result, use_container_width=True)
+                    
+                    with col2:
+                        st.markdown("#### Summary for Year {0}".format(selected_year))
+                        st.metric("Car Types Sold", len(result))
+                        st.metric("Total Units Sold", int(result['Units Sold'].sum()))
+                        st.metric("Avg Units per Type", int(result['Units Sold'].mean()))
+                    
+                    # Bar chart
+                    st.markdown("#### Bar Chart")
+                    fig = px.bar(
+                        result,
+                        x=car_type_col,
+                        y='Units Sold',
+                        title=f"Units Sold by {car_type_col} in {selected_year}",
+                        labels={'Units Sold': 'Units Sold'},
+                        color='Units Sold',
+                        color_continuous_scale='Greens'
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Export
+                    csv = result.to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Results as CSV",
+                        data=csv,
+                        file_name=f"car_sales_{selected_year}.csv",
+                        mime="text/csv",
+                        key="year_download"
                     )
                 
                 except Exception as e:
