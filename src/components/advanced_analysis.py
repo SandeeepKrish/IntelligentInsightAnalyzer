@@ -210,63 +210,29 @@ def render_advanced_analysis(service: AnalyzerService):
         st.markdown("### 🚗 Car Sales by Type & Year Analysis")
         st.write("Analyze car sales by type and year with two flexible options")
         
-        # Detect Car Type and Year columns
-        car_type_col = None
-        year_col = None
-        units_col = None
-        
-        # Auto-detect columns
-        for col in analysis_engine.categorical_cols:
-            col_lower = col.lower()
-            if 'type' in col_lower or 'car' in col_lower or 'model' in col_lower:
-                car_type_col = col
-        
-        for col in analysis_engine.categorical_cols:
-            col_lower = col.lower()
-            if 'year' in col_lower:
-                year_col = col
-        
-        for col in analysis_engine.numeric_cols:
-            col_lower = col.lower()
-            if 'unit' in col_lower or 'sold' in col_lower or 'sales' in col_lower:
-                units_col = col
-        
-        # Allow manual selection if auto-detection didn't work
+        # Allow manual selection for all columns
         st.markdown("#### Step 1: Configure Columns")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
             car_type_col = st.selectbox(
-                "Car Type Column",
+                "Select Car Type Column",
                 analysis_engine.categorical_cols,
-                index=analysis_engine.categorical_cols.index(car_type_col) if car_type_col in analysis_engine.categorical_cols else 0,
                 key="car_type_col_select"
             )
         
         with col2:
-            if year_col and year_col in analysis_engine.categorical_cols:
-                year_index = analysis_engine.categorical_cols.index(year_col)
-            else:
-                year_index = 0
-            
             year_col = st.selectbox(
-                "Year Column",
+                "Select Year Column",
                 analysis_engine.categorical_cols,
-                index=year_index,
                 key="year_col_select"
             )
         
         with col3:
-            if units_col and units_col in analysis_engine.numeric_cols:
-                units_index = analysis_engine.numeric_cols.index(units_col)
-            else:
-                units_index = 0
-            
             units_col = st.selectbox(
-                "Units Sold Column",
+                "Select Numeric Column (Units/Price/etc)",
                 analysis_engine.numeric_cols,
-                index=units_index,
                 key="units_col_select"
             )
         
