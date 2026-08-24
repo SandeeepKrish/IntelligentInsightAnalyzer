@@ -17,6 +17,13 @@ def render_data_quality(service: AnalyzerService):
     """
     st.subheader("🧹 Data Quality Assessment")
     
+    df = service.get_dataframe()
+    
+    # Check if a dataframe is loaded
+    if df is None or df.empty:
+        st.info("🚧 **Under Construction** - Upload a CSV or Excel file to assess data quality")
+        return
+    
     quality = service.get_data_quality_metrics()
     
     # Quality metrics in columns
@@ -37,7 +44,6 @@ def render_data_quality(service: AnalyzerService):
     # Detailed quality table
     st.markdown("### Column Quality Details")
     
-    df = service.get_dataframe()
     quality_df = pd.DataFrame({
         "column": df.columns,
         "dtype": [str(df[c].dtype) for c in df.columns],

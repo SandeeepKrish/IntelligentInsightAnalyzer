@@ -18,6 +18,13 @@ def render_charts(service: AnalyzerService):
     """
     st.subheader("📈 Create Custom Visualizations")
     
+    df = service.get_dataframe()
+    
+    # Check if a dataframe is loaded
+    if df is None or df.empty:
+        st.info("🚧 **Under Construction** - Upload a CSV or Excel file to create charts")
+        return
+    
     chart_type = st.selectbox("Chart Type", AppConfig.CHART_TYPES)
     
     nums = service.get_numeric_columns()

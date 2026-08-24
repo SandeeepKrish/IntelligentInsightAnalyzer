@@ -19,6 +19,13 @@ def render_advanced_analysis(service: AnalyzerService):
         service: AnalyzerService instance
     """
     df = service.get_dataframe()
+    
+    # Check if a dataframe is loaded
+    if df is None or df.empty:
+        st.subheader("🔬 Advanced Analysis")
+        st.info("🚧 **Under Construction** - Upload a CSV or Excel file for advanced analysis")
+        return
+    
     analysis_engine = AnalysisEngine(df)
     
     # Sidebar for analysis selection

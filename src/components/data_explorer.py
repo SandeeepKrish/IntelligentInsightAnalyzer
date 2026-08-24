@@ -18,19 +18,26 @@ def render_data_explorer(service: AnalyzerService):
     """
     st.subheader("📊 Dataset Preview & Exploration")
     
+    df = service.get_dataframe()
+    
+    # Check if a dataframe is loaded
+    if df is None or df.empty:
+        st.info("📄 Upload a CSV or Excel file to explore dataset")
+        return
+    
     col1, col2 = st.columns([3, 1])
     
     with col1:
         st.markdown("### First 100 Rows")
-        df = service.get_dataframe_preview(100)
-        st.dataframe(df, use_container_width=True)
+        df_preview = service.get_dataframe_preview(100)
+        st.dataframe(df_preview, use_container_width=True)
     
     with col2:
         st.markdown("### Column Types")
         col_types = service.get_column_types()
-        st.write(f"**Numeric:** {len(col_types['numeric'])}")
-        st.write(f"**Categorical:** {len(col_types['categorical'])}")
-        st.write(f"**DateTime:** {len(col_types['datetime'])}")
+        st.write(f"**Numeric:** {len(col_types.get('numeric', []))}")
+        st.write(f"**Categorical:** {len(col_types.get('categorical', []))}")
+        st.write(f"**DateTime:** {len(col_types.get('datetime', []))}")
     
     # Distribution analysis
     st.markdown("### Distribution Analysis")
