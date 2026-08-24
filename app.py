@@ -103,26 +103,37 @@ with st.sidebar:
     )
     
     if uploaded_file is not None:
-        try:
-            # Load the data
-            df = service.load_data(uploaded_file.name, uploaded_file.getvalue())
+        # Check if PDF is already loaded
+        if len(service.get_pdf_names()) > 0:
+            st.error("⚠️ PDF file is already selected!")
+            st.warning("""
+            You cannot load both Excel/CSV and PDF files simultaneously.
             
-            st.success(f"✅ Loaded: {uploaded_file.name}")
+            **To load an Excel/CSV file:**
+            1. Click "🗑️ Clear All PDFs" below to remove PDF files
+            2. Then upload your Excel/CSV file
+            """)
+        else:
+            try:
+                # Load the data
+                df = service.load_data(uploaded_file.name, uploaded_file.getvalue())
+                
+                st.success(f"✅ Loaded: {uploaded_file.name}")
+                
+                # Display dataset stats
+                st.metric("Rows", f"{len(df):,}")
+                st.metric("Columns", len(df.columns))
+                
+                # Data quality score
+                quality = service.get_data_quality_metrics()
+                st.metric("Quality Score", f"{quality['quality_score']:.1f}%")
+                
+                # Store in session state that file is loaded
+                st.session_state.file_loaded = True
             
-            # Display dataset stats
-            st.metric("Rows", f"{len(df):,}")
-            st.metric("Columns", len(df.columns))
-            
-            # Data quality score
-            quality = service.get_data_quality_metrics()
-            st.metric("Quality Score", f"{quality['quality_score']:.1f}%")
-            
-            # Store in session state that file is loaded
-            st.session_state.file_loaded = True
-        
-        except Exception as e:
-            st.error(f"❌ Error loading file: {str(e)}")
-            st.session_state.file_loaded = False
+            except Exception as e:
+                st.error(f"❌ Error loading file: {str(e)}")
+                st.session_state.file_loaded = False
     
     # PDF Upload Section
     st.divider()
@@ -136,20 +147,32 @@ with st.sidebar:
     )
     
     if uploaded_pdf:
-        for pdf_file in uploaded_pdf:
-            try:
-                # Load the PDF
-                result = service.load_pdf(pdf_file.name, pdf_file.getvalue())
-                
-                if result["success"]:
-                    st.success(result["message"])
-                    # Set file_loaded flag so chat interface appears
-                    st.session_state.file_loaded = True
-                else:
-                    st.error(f"❌ {result['error']}")
+        # Check if Excel/CSV is already loaded
+        if service.get_dataframe() is not None and not service.get_dataframe().empty:
+            st.error("⚠️ Excel/CSV file is already selected!")
+            st.warning("""
+            You cannot load both Excel/CSV and PDF files simultaneously.
             
-            except Exception as e:
-                st.error(f"❌ Error loading PDF: {str(e)}")
+            **To load PDF files:**
+            1. There's currently an Excel/CSV file loaded
+            2. The chat interface will use the Excel/CSV data
+            3. To use PDFs instead, you need to reload the page or clear the data
+            """)
+        else:
+            for pdf_file in uploaded_pdf:
+                try:
+                    # Load the PDF
+                    result = service.load_pdf(pdf_file.name, pdf_file.getvalue())
+                    
+                    if result["success"]:
+                        st.success(result["message"])
+                        # Set file_loaded flag so chat interface appears
+                        st.session_state.file_loaded = True
+                    else:
+                        st.error(f"❌ {result['error']}")
+                
+                except Exception as e:
+                    st.error(f"❌ Error loading PDF: {str(e)}")
     
     # Display loaded PDFs info
     pdf_count = len(service.get_pdf_names())
@@ -159,6 +182,17 @@ with st.sidebar:
         if st.button("🗑️ Clear All PDFs"):
             service.clear_pdfs()
             st.success("✅ All PDFs cleared!")
+            st.rerun()
+    
+    # Display loaded Excel/CSV info
+    if service.get_dataframe() is not None and not service.get_dataframe().empty:
+        st.info("📊 Excel/CSV file is loaded")
+        
+        if st.button("🗑️ Clear Data File"):
+            service.current_dataframe = None
+            service.data_context = ""
+            st.session_state.file_loaded = False
+            st.success("✅ Data file cleared!")
             st.rerun()
     
     # Conversation controls
