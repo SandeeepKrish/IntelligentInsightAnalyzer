@@ -143,6 +143,8 @@ with st.sidebar:
                 
                 if result["success"]:
                     st.success(result["message"])
+                    # Set file_loaded flag so chat interface appears
+                    st.session_state.file_loaded = True
                 else:
                     st.error(f"❌ {result['error']}")
             
@@ -189,7 +191,7 @@ file_loaded = st.session_state.get("file_loaded", False)
 
 if not file_loaded:
     # Welcome screen
-    st.info("👈 Upload a CSV or Excel file from the sidebar to begin")
+    st.info("👈 Upload a CSV, Excel file, or PDF from the sidebar to begin")
     
     st.markdown("""
     ### ✨ Features
@@ -199,6 +201,7 @@ if not file_loaded:
     - 📊 **Data Exploration** - Preview and explore your dataset
     - 🧹 **Data Quality** - Check data health metrics
     - 📈 **Custom Charts** - Create pie, bar, scatter, and line charts
+    - 📄 **PDF Analysis** - Upload and analyze PDF documents with AI
     
  
     """)
