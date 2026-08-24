@@ -5,11 +5,6 @@ OpenAI LLM Interface with Streaming Support
 import os
 from typing import Generator, List, Dict, Any
 from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
 class StreamingLLM:
     """Wrapper for OpenAI API with streaming capabilities"""
     
