@@ -47,323 +47,11 @@ def render_advanced_analysis(service: AnalyzerService):
     )
     
     # ====================================================================
-    # CUSTOM MULTI-DIMENSIONAL ANALYSIS (NEW)
-    # ====================================================================
-    
-    if analysis_type == "⭐ Custom Multi-Dimensional Analysis":
-        st.markdown("### ⭐ Custom Multi-Dimensional Analysis")
-        st.write("Create custom analysis by selecting dimensions and metrics")
-        
-        # Main controls
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            group_cols = st.multiselect(
-                "Select Dimension(s) to Group By",
-                analysis_engine.categorical_cols,
-                max_selections=3,
-                help="Pick 1-3 columns to group your data",
-                key="custom_group_cols"
-            )
-        
-        with col2:
-            metric_col = st.selectbox(
-                "Select Metric Column",
-                analysis_engine.numeric_cols,
-                help="The numeric column to analyze",
-                key="custom_metric_col"
-            )
-        
-        with col3:
-            aggregation = st.selectbox(
-                "Aggregation Method",
-                ["sum", "count", "mean", "min", "max", "median"],
-                help="How to aggregate the metric",
-                key="custom_agg"
-            )
-        
-        st.divider()
-        
-        # Additional filters
-        st.markdown("### 🔍 Optional Filters")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            filter_columns = st.multiselect(
-                "Filter by (Optional)",
-                analysis_engine.categorical_cols,
-                max_selections=2,
-                key="custom_filter_cols"
-            )
-        
-        with col2:
-            sort_by = st.selectbox(
-                "Sort Results By",
-                ["Value (High to Low)", "Value (Low to High)", "Group Name (A-Z)", "Group Name (Z-A)"],
-                key="custom_sort"
-            )
-        
-        # Build filter dictionary
-        filters = {}
-        if filter_columns:
-            for col in filter_columns:
-                unique_vals = df[col].unique()
-                selected_vals = st.multiselect(
-                    f"Select values for {col}",
-                    unique_vals,
-                    key=f"custom_filter_{col}"
-                )
-                if selected_vals:
-                    filters[col] = selected_vals
-        
-        st.divider()
-        
-        # Analyze button
-        if st.button("🔍 Run Analysis", key="custom_analyze_btn", use_container_width=True):
-            if not group_cols:
-                st.error("❌ Please select at least one dimension to group by")
-            else:
-                try:
-                    # Apply filters
-                    filtered_df = df.copy()
-                    for col, values in filters.items():
-                        filtered_df = filtered_df[filtered_df[col].isin(values)]
-                    
-                    # Group and aggregate
-                    if aggregation == "count":
-                        result = filtered_df.groupby(group_cols).size().reset_index(name='value')
-                    else:
-                        result = filtered_df.groupby(group_cols)[metric_col].agg(aggregation).reset_index()
-                        result.columns = group_cols + ['value']
-                    
-                    # Sort results
-                    if "High to Low" in sort_by:
-                        result = result.sort_values('value', ascending=False)
-                    elif "Low to High" in sort_by:
-                        result = result.sort_values('value', ascending=True)
-                    elif "Z-A" in sort_by:
-                        result = result.sort_values(group_cols[0], ascending=False)
-                    else:  # A-Z
-                        result = result.sort_values(group_cols[0], ascending=True)
-                    
-                    # Display results
-                    st.markdown(f"### 📊 Results - {' + '.join(group_cols)} by {aggregation.upper()} of {metric_col}")
-                    
-                    col1, col2 = st.columns([2, 1])
-                    
-                    with col1:
-                        st.markdown("#### Results Table")
-                        st.dataframe(result, use_container_width=True, height=400)
-                    
-                    with col2:
-                        st.markdown("#### Summary Stats")
-                        st.metric("Total Groups", len(result))
-                        st.metric("Max Value", f"{result['value'].max():.2f}")
-                        st.metric("Min Value", f"{result['value'].min():.2f}")
-                        st.metric("Avg Value", f"{result['value'].mean():.2f}")
-                    
-                    # Chart
-                    st.markdown("#### Visualization")
-                    
-                    if len(group_cols) == 1:
-                        fig = px.bar(
-                            result,
-                            x=group_cols[0],
-                            y='value',
-                            title=f"{aggregation.title()} of {metric_col} by {group_cols[0]}",
-                            labels={'value': f'{aggregation.title()} Value'},
-                            color='value',
-                            color_continuous_scale='Viridis'
-                        )
-                    else:
-                        fig = px.bar(
-                            result,
-                            x=group_cols[0],
-                            y='value',
-                            color=group_cols[1] if len(group_cols) > 1 else None,
-                            title=f"{aggregation.title()} of {metric_col} by {' + '.join(group_cols)}",
-                            labels={'value': f'{aggregation.title()} Value'},
-                            barmode='group'
-                        )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Export button
-                    csv = result.to_csv(index=False)
-                    st.download_button(
-                        label="📥 Download Results as CSV",
-                        data=csv,
-                        file_name=f"analysis_{' + '.join(group_cols)}.csv",
-                        mime="text/csv",
-                        key="custom_download"
-                    )
-                
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
-    
-    # ====================================================================
-    # CAR SALES BY TYPE & YEAR
-    # ====================================================================
-    
-    elif analysis_type == "🚗 Car Sales by Type & Year":
-        st.markdown("### 🚗 Car Sales by Type & Year Analysis")
-        st.write("Analyze car sales by type and year with two flexible options")
-        
-        # Allow manual selection for all columns
-        st.markdown("#### Step 1: Configure Columns")
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            car_type_col = st.selectbox(
-                "Select Car Type Column",
-                analysis_engine.categorical_cols,
-                key="car_type_col_select"
-            )
-        
-        with col2:
-            year_col = st.selectbox(
-                "Select Year Column",
-                analysis_engine.categorical_cols + analysis_engine.numeric_cols,
-                key="year_col_select"
-            )
-        
-        with col3:
-            units_col = st.selectbox(
-                "Select Numeric Column (Units/Price/etc)",
-                analysis_engine.numeric_cols,
-                key="units_col_select"
-            )
-        
-        st.divider()
-        
-        # Get unique years from data
-        unique_years = sorted(df[year_col].unique())
-        
-        st.markdown("#### Step 2: Choose Analysis Type")
-        
-        analysis_mode = st.radio(
-            "What do you want to analyze?",
-            ["📊 By Car Type (All Years)", "📅 By Year (Select Specific Year)"],
-            horizontal=True,
-            key="car_analysis_mode"
-        )
-        
-        if analysis_mode == "📊 By Car Type (All Years)":
-            st.markdown("### Analysis: Units Sold by Car Type (All Years Combined)")
-            
-            if st.button("📊 Generate Car Type Analysis", key="btn_car_type_analysis"):
-                try:
-                    # Group by car type and sum units
-                    result = df.groupby(car_type_col)[units_col].sum().reset_index()
-                    result.columns = [car_type_col, 'Units Sold']
-                    result = result.sort_values('Units Sold', ascending=False)
-                    
-                    # Display results
-                    col1, col2 = st.columns([2, 1])
-                    
-                    with col1:
-                        st.markdown("#### Results Table")
-                        st.dataframe(result, use_container_width=True)
-                    
-                    with col2:
-                        st.markdown("#### Summary")
-                        st.metric("Total Car Types", len(result))
-                        st.metric("Total Units Sold", int(result['Units Sold'].sum()))
-                        st.metric("Avg Units per Type", int(result['Units Sold'].mean()))
-                    
-                    # Bar chart
-                    st.markdown("#### Bar Chart")
-                    fig = px.bar(
-                        result,
-                        x=car_type_col,
-                        y='Units Sold',
-                        title=f"Total Units Sold by {car_type_col}",
-                        labels={'Units Sold': 'Units Sold'},
-                        color='Units Sold',
-                        color_continuous_scale='Blues'
-                    )
-                    fig.update_layout(xaxis_tickangle=-45)
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Export
-                    csv = result.to_csv(index=False)
-                    st.download_button(
-                        label="📥 Download Results as CSV",
-                        data=csv,
-                        file_name=f"car_sales_by_type.csv",
-                        mime="text/csv",
-                        key="car_type_download"
-                    )
-                
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
-        
-        else:  # By Year
-            st.markdown("### Analysis: Units Sold by Car Type in a Specific Year")
-            st.write(f"Available years: {', '.join(map(str, unique_years))}")
-            
-            selected_year = st.selectbox(
-                "Select Year",
-                unique_years,
-                key="year_selection"
-            )
-            
-            if st.button("📅 Generate Year Analysis", key="btn_year_analysis"):
-                try:
-                    # Filter by year and group by car type
-                    year_data = df[df[year_col] == selected_year]
-                    result = year_data.groupby(car_type_col)[units_col].sum().reset_index()
-                    result.columns = [car_type_col, 'Units Sold']
-                    result = result.sort_values('Units Sold', ascending=False)
-                    
-                    # Display results
-                    col1, col2 = st.columns([2, 1])
-                    
-                    with col1:
-                        st.markdown("#### Results Table")
-                        st.dataframe(result, use_container_width=True)
-                    
-                    with col2:
-                        st.markdown("#### Summary for Year {0}".format(selected_year))
-                        st.metric("Car Types Sold", len(result))
-                        st.metric("Total Units Sold", int(result['Units Sold'].sum()))
-                        st.metric("Avg Units per Type", int(result['Units Sold'].mean()))
-                    
-                    # Bar chart
-                    st.markdown("#### Bar Chart")
-                    fig = px.bar(
-                        result,
-                        x=car_type_col,
-                        y='Units Sold',
-                        title=f"Units Sold by {car_type_col} in {selected_year}",
-                        labels={'Units Sold': 'Units Sold'},
-                        color='Units Sold',
-                        color_continuous_scale='Greens'
-                    )
-                    fig.update_layout(xaxis_tickangle=-45)
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Export
-                    csv = result.to_csv(index=False)
-                    st.download_button(
-                        label="📥 Download Results as CSV",
-                        data=csv,
-                        file_name=f"car_sales_{selected_year}.csv",
-                        mime="text/csv",
-                        key="year_download"
-                    )
-                
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
-    
-    # ====================================================================
     # 1. GROUP & AGGREGATE
     # ====================================================================
     
-    elif analysis_type == "📊 Group & Aggregate":
-        st.subheader("📊 Group & Aggregate Analysis")
+    if analysis_type == "📊 Group & Aggregate":
+        st.markdown("### 📊 Group & Aggregate Analysis")
         st.write("Group your data by a column and aggregate using different methods")
         
         col1, col2, col3, col4 = st.columns(4)
@@ -774,3 +462,315 @@ def render_advanced_analysis(service: AnalyzerService):
                 st.markdown("### Distribution Visualization")
                 fig = px.box(df, y=col, title=f"Distribution of {col}")
                 st.plotly_chart(fig, use_container_width=True)
+
+    # ====================================================================
+    # 8. CUSTOM MULTI-DIMENSIONAL ANALYSIS
+    # ====================================================================
+    
+    elif analysis_type == "⭐ Custom Multi-Dimensional Analysis":
+        st.markdown("### ⭐ Custom Multi-Dimensional Analysis")
+        st.write("Create custom analysis by selecting dimensions and metrics")
+        
+        # Main controls
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            group_cols = st.multiselect(
+                "Select Dimension(s) to Group By",
+                analysis_engine.categorical_cols,
+                max_selections=3,
+                help="Pick 1-3 columns to group your data",
+                key="custom_group_cols"
+            )
+        
+        with col2:
+            metric_col = st.selectbox(
+                "Select Metric Column",
+                analysis_engine.numeric_cols,
+                help="The numeric column to analyze",
+                key="custom_metric_col"
+            )
+        
+        with col3:
+            aggregation = st.selectbox(
+                "Aggregation Method",
+                ["sum", "count", "mean", "min", "max", "median"],
+                help="How to aggregate the metric",
+                key="custom_agg"
+            )
+        
+        st.divider()
+        
+        # Additional filters
+        st.markdown("### 🔍 Optional Filters")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            filter_columns = st.multiselect(
+                "Filter by (Optional)",
+                analysis_engine.categorical_cols,
+                max_selections=2,
+                key="custom_filter_cols"
+            )
+        
+        with col2:
+            sort_by = st.selectbox(
+                "Sort Results By",
+                ["Value (High to Low)", "Value (Low to High)", "Group Name (A-Z)", "Group Name (Z-A)"],
+                key="custom_sort"
+            )
+        
+        # Build filter dictionary
+        filters = {}
+        if filter_columns:
+            for col in filter_columns:
+                unique_vals = df[col].unique()
+                selected_vals = st.multiselect(
+                    f"Select values for {col}",
+                    unique_vals,
+                    key=f"custom_filter_{col}"
+                )
+                if selected_vals:
+                    filters[col] = selected_vals
+        
+        st.divider()
+        
+        # Analyze button
+        if st.button("🔍 Run Analysis", key="custom_analyze_btn", use_container_width=True):
+            if not group_cols:
+                st.error("❌ Please select at least one dimension to group by")
+            else:
+                try:
+                    # Apply filters
+                    filtered_df = df.copy()
+                    for col, values in filters.items():
+                        filtered_df = filtered_df[filtered_df[col].isin(values)]
+                    
+                    # Group and aggregate
+                    if aggregation == "count":
+                        result = filtered_df.groupby(group_cols).size().reset_index(name='value')
+                    else:
+                        result = filtered_df.groupby(group_cols)[metric_col].agg(aggregation).reset_index()
+                        result.columns = group_cols + ['value']
+                    
+                    # Sort results
+                    if "High to Low" in sort_by:
+                        result = result.sort_values('value', ascending=False)
+                    elif "Low to High" in sort_by:
+                        result = result.sort_values('value', ascending=True)
+                    elif "Z-A" in sort_by:
+                        result = result.sort_values(group_cols[0], ascending=False)
+                    else:  # A-Z
+                        result = result.sort_values(group_cols[0], ascending=True)
+                    
+                    # Display results
+                    st.markdown(f"### 📊 Results - {' + '.join(group_cols)} by {aggregation.upper()} of {metric_col}")
+                    
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown("#### Results Table")
+                        st.dataframe(result, use_container_width=True, height=400)
+                    
+                    with col2:
+                        st.markdown("#### Summary Stats")
+                        st.metric("Total Groups", len(result))
+                        st.metric("Max Value", f"{result['value'].max():.2f}")
+                        st.metric("Min Value", f"{result['value'].min():.2f}")
+                        st.metric("Avg Value", f"{result['value'].mean():.2f}")
+                    
+                    # Chart
+                    st.markdown("#### Visualization")
+                    
+                    if len(group_cols) == 1:
+                        fig = px.bar(
+                            result,
+                            x=group_cols[0],
+                            y='value',
+                            title=f"{aggregation.title()} of {metric_col} by {group_cols[0]}",
+                            labels={'value': f'{aggregation.title()} Value'},
+                            color='value',
+                            color_continuous_scale='Viridis'
+                        )
+                    else:
+                        fig = px.bar(
+                            result,
+                            x=group_cols[0],
+                            y='value',
+                            color=group_cols[1] if len(group_cols) > 1 else None,
+                            title=f"{aggregation.title()} of {metric_col} by {' + '.join(group_cols)}",
+                            labels={'value': f'{aggregation.title()} Value'},
+                            barmode='group'
+                        )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Export button
+                    csv = result.to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Results as CSV",
+                        data=csv,
+                        file_name=f"analysis_{' + '.join(group_cols)}.csv",
+                        mime="text/csv",
+                        key="custom_download"
+                    )
+                
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+    
+    # ====================================================================
+    # 9. CAR SALES BY TYPE & YEAR
+    # ====================================================================
+    
+    elif analysis_type == "🚗 Car Sales by Type & Year":
+        st.markdown("### 🚗 Car Sales by Type & Year Analysis")
+        st.write("Analyze car sales by type and year with two flexible options")
+        
+        # Allow manual selection for all columns
+        st.markdown("#### Step 1: Configure Columns")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            car_type_col = st.selectbox(
+                "Select Car Type Column",
+                analysis_engine.categorical_cols,
+                key="car_type_col_select"
+            )
+        
+        with col2:
+            year_col = st.selectbox(
+                "Select Year Column",
+                analysis_engine.categorical_cols + analysis_engine.numeric_cols,
+                key="year_col_select"
+            )
+        
+        with col3:
+            units_col = st.selectbox(
+                "Select Numeric Column (Units/Price/etc)",
+                analysis_engine.numeric_cols,
+                key="units_col_select"
+            )
+        
+        st.divider()
+        
+        # Get unique years from data
+        unique_years = sorted(df[year_col].unique())
+        
+        st.markdown("#### Step 2: Choose Analysis Type")
+        
+        analysis_mode = st.radio(
+            "What do you want to analyze?",
+            ["📊 By Car Type (All Years)", "📅 By Year (Select Specific Year)"],
+            horizontal=True,
+            key="car_analysis_mode"
+        )
+        
+        if analysis_mode == "📊 By Car Type (All Years)":
+            st.markdown("### Analysis: Units Sold by Car Type (All Years Combined)")
+            
+            if st.button("📊 Generate Car Type Analysis", key="btn_car_type_analysis"):
+                try:
+                    # Group by car type and sum units
+                    result = df.groupby(car_type_col)[units_col].sum().reset_index()
+                    result.columns = [car_type_col, 'Units Sold']
+                    result = result.sort_values('Units Sold', ascending=False)
+                    
+                    # Display results
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown("#### Results Table")
+                        st.dataframe(result, use_container_width=True)
+                    
+                    with col2:
+                        st.markdown("#### Summary")
+                        st.metric("Total Car Types", len(result))
+                        st.metric("Total Units Sold", int(result['Units Sold'].sum()))
+                        st.metric("Avg Units per Type", int(result['Units Sold'].mean()))
+                    
+                    # Bar chart
+                    st.markdown("#### Bar Chart")
+                    fig = px.bar(
+                        result,
+                        x=car_type_col,
+                        y='Units Sold',
+                        title=f"Total Units Sold by {car_type_col}",
+                        labels={'Units Sold': 'Units Sold'},
+                        color='Units Sold',
+                        color_continuous_scale='Blues'
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Export
+                    csv = result.to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Results as CSV",
+                        data=csv,
+                        file_name=f"car_sales_by_type.csv",
+                        mime="text/csv",
+                        key="car_type_download"
+                    )
+                
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
+        
+        else:  # By Year
+            st.markdown("### Analysis: Units Sold by Car Type in a Specific Year")
+            st.write(f"Available years: {', '.join(map(str, unique_years))}")
+            
+            selected_year = st.selectbox(
+                "Select Year",
+                unique_years,
+                key="year_selection"
+            )
+            
+            if st.button("📅 Generate Year Analysis", key="btn_year_analysis"):
+                try:
+                    # Filter by year and group by car type
+                    year_data = df[df[year_col] == selected_year]
+                    result = year_data.groupby(car_type_col)[units_col].sum().reset_index()
+                    result.columns = [car_type_col, 'Units Sold']
+                    result = result.sort_values('Units Sold', ascending=False)
+                    
+                    # Display results
+                    col1, col2 = st.columns([2, 1])
+                    
+                    with col1:
+                        st.markdown("#### Results Table")
+                        st.dataframe(result, use_container_width=True)
+                    
+                    with col2:
+                        st.markdown("#### Summary for Year {0}".format(selected_year))
+                        st.metric("Car Types Sold", len(result))
+                        st.metric("Total Units Sold", int(result['Units Sold'].sum()))
+                        st.metric("Avg Units per Type", int(result['Units Sold'].mean()))
+                    
+                    # Bar chart
+                    st.markdown("#### Bar Chart")
+                    fig = px.bar(
+                        result,
+                        x=car_type_col,
+                        y='Units Sold',
+                        title=f"Units Sold by {car_type_col} in {selected_year}",
+                        labels={'Units Sold': 'Units Sold'},
+                        color='Units Sold',
+                        color_continuous_scale='Greens'
+                    )
+                    fig.update_layout(xaxis_tickangle=-45)
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    # Export
+                    csv = result.to_csv(index=False)
+                    st.download_button(
+                        label="📥 Download Results as CSV",
+                        data=csv,
+                        file_name=f"car_sales_{selected_year}.csv",
+                        mime="text/csv",
+                        key="year_download"
+                    )
+                
+                except Exception as e:
+                    st.error(f"❌ Error: {str(e)}")
