@@ -320,10 +320,11 @@ class AnalysisEngine:
                 result = df_filtered.groupby(group_col)[metric_col].mean()
             else:
                 result = df_filtered.groupby(group_col)[metric_col].count()
+            # Rename the metric column to 'value' for consistency
+            return result.reset_index().rename(columns={metric_col: 'value'})
         else:
             result = df_filtered.groupby(group_col).size()
-        
-        return result.reset_index().rename(columns={0: 'value'} if not metric_col else {})
+            return result.reset_index().rename(columns={0: 'value'})
     
     # ========================================================================
     # Summary Statistics
