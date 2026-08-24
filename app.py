@@ -137,6 +137,41 @@ with st.sidebar:
         summary = service.get_conversation_summary()
         st.caption(f"📊 Messages in chat: {summary['total_messages']}")
     
+    # PDF Upload Section
+    st.divider()
+    st.header("📄 PDF Documents")
+    
+    uploaded_pdf = st.file_uploader(
+        "Upload PDF files",
+        type=["pdf"],
+        accept_multiple_files=True,
+        key="pdf_uploader"
+    )
+    
+    if uploaded_pdf:
+        for pdf_file in uploaded_pdf:
+            try:
+                # Load the PDF
+                result = service.load_pdf(pdf_file.name, pdf_file.getvalue())
+                
+                if result["success"]:
+                    st.success(result["message"])
+                else:
+                    st.error(f"❌ {result['error']}")
+            
+            except Exception as e:
+                st.error(f"❌ Error loading PDF: {str(e)}")
+    
+    # Display loaded PDFs info
+    pdf_count = len(service.get_pdf_names())
+    if pdf_count > 0:
+        st.info(f"📄 {pdf_count} PDF(s) loaded and ready for analysis")
+        
+        if st.button("🗑️ Clear All PDFs"):
+            service.clear_pdfs()
+            st.success("✅ All PDFs cleared!")
+            st.rerun()
+    
     # Theme toggle at the bottom of sidebar
     render_theme_toggle()
 

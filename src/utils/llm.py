@@ -75,7 +75,7 @@ class StreamingLLM:
             full_response += chunk
         return full_response
     
-    def analyze_data(self, data_context: str, question: str, messages: List[Dict[str, str]]) -> Generator[str, None, None]:
+    def analyze_data(self, data_context: str, question: str, messages: List[Dict[str, str]], pdf_content: str = None) -> Generator[str, None, None]:
         """
         Analyze data and stream response
         
@@ -83,6 +83,7 @@ class StreamingLLM:
             data_context: Dataset summary/context
             question: User's question about the data
             messages: Conversation history
+            pdf_content: Optional PDF document content for analysis
             
         Yields:
             Streamed response chunks
@@ -90,23 +91,28 @@ class StreamingLLM:
         # Enhance the prompt with data context
         enhanced_messages = messages.copy()
         
-        # Update or create system message with data context
-        system_prompt = f"""You are an expert data analyst AI assistant. Your role is to analyze the provided dataset and answer user questions about it.
+        # Build the system prompt with data and PDF context
+        system_prompt = """You are an expert data analyst AI assistant. Your role is to analyze the provided dataset and documents, and answer user questions comprehensively.
 
 IMPORTANT INSTRUCTIONS:
-1. ALWAYS reference the actual data provided in the dataset context below
+1. ALWAYS reference the actual data provided in the context below
 2. Use specific numbers, percentages, and statistics from the data
 3. Never say you don't have access to data - analyze what's provided
-4. Focus on answering the user's specific question about their data
+4. Focus on answering the user's specific question
 5. If data is missing for a specific metric, explain what you DO see in the data
-6. Provide actionable insights based on the actual dataset
-
-Dataset Context:
-{data_context}
-
-User Question: {question}
-
-Analyze this data thoroughly and provide specific insights based on what's actually in the dataset."""
+6. Provide actionable insights based on the actual dataset and documents
+7. When analyzing PDF content, extract relevant information and relate it to the user's question
+8. Be thorough and cite specific information from the documents"""
+        
+        # Add dataset context
+        if data_context:
+            system_prompt += f"\n\nDataset Context:\n{data_context}"
+        
+        # Add PDF content if provided
+        if pdf_content:
+            system_prompt += f"\n\nDocument Content:\n{pdf_content}"
+        
+        system_prompt += f"\n\nUser Question: {question}\n\nAnalyze this information thoroughly and provide specific insights based on what's actually provided."
         
         # Replace or add system message
         if enhanced_messages and enhanced_messages[0]["role"] == "system":

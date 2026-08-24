@@ -5,3 +5,4 @@ plotly
 openpyxl
 openai
 python-dotenv
+PyPDF2

@@ -19,6 +19,31 @@ def render_chat_interface(service: AnalyzerService):
     # Apply custom chat styling
     apply_chat_styling()
     
+    # PDF Selection Section (if PDFs are loaded)
+    pdf_names = service.get_pdf_names()
+    if pdf_names:
+        st.markdown("### 📄 PDF Document Context")
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            selected_pdf = st.selectbox(
+                "Select a PDF to include in analysis:",
+                pdf_names,
+                index=0 if service.get_current_pdf() not in pdf_names else pdf_names.index(service.get_current_pdf()),
+                key="chat_pdf_selector",
+                help="The selected PDF content will be included in your chat analysis"
+            )
+            
+            if selected_pdf:
+                service.set_current_pdf(selected_pdf)
+        
+        with col2:
+            if st.button("❌ Deselect", key="deselect_pdf_btn"):
+                service.set_current_pdf(None)
+                st.rerun()
+        
+        st.divider()
+    
     # Container for conversation history
     chat_container = st.container()
     

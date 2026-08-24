@@ -10,7 +10,7 @@ import streamlit as st
 from typing import Dict, Any, Generator
 
 from config import AppConfig
-from utils import ConversationMemory, StreamingLLM, DataAnalyzer
+from utils import ConversationMemory, StreamingLLM, DataAnalyzer, PDFHandler
 
 
 class AnalyzerService:
@@ -72,6 +72,10 @@ class AnalyzerService:
         self.data_analyzer = DataAnalyzer()
         self.current_dataframe = None
         self.data_context = ""
+        
+        # PDF document storage
+        self.pdf_documents = {}  # {filename: {content, text, metadata}}
+        self.current_pdf = None  # Currently selected PDF for chat
     
     def load_data(self, filename: str, file_data: bytes) -> pd.DataFrame:
         """
@@ -112,13 +116,22 @@ class AnalyzerService:
             window_size=AppConfig.RECENT_CONTEXT_WINDOW
         )
         
+        # Get PDF content if a PDF is selected
+        pdf_content = None
+        if self.current_pdf:
+            pdf_text = self.get_pdf_text()
+            if pdf_text:
+                # Limit PDF content to first 3000 characters to avoid token limits
+                pdf_content = pdf_text[:3000] if len(pdf_text) > 3000 else pdf_text
+        
         # Stream response
         full_response = ""
         try:
             for chunk in self.llm.analyze_data(
                 data_context=self.data_context,
                 question=question,
-                messages=messages
+                messages=messages,
+                pdf_content=pdf_content
             ):
                 full_response += chunk
                 yield chunk
@@ -188,3 +201,104 @@ class AnalyzerService:
             return []
         col_types = self.get_column_types()
         return col_types.get("categorical", [])
+
+    # ========================================================================
+    # PDF Document Handling Methods
+    # ========================================================================
+    
+    def load_pdf(self, filename: str, file_data: bytes) -> Dict[str, Any]:
+        """
+        Load and process a PDF document
+        
+        Args:
+            filename: Name of the PDF file
+            file_data: PDF file content as bytes
+            
+        Returns:
+            Dictionary with PDF metadata and extraction status
+        """
+        try:
+            # Validate PDF
+            is_valid, message = PDFHandler.validate_pdf(file_data)
+            if not is_valid:
+                return {"success": False, "error": message}
+            
+            # Get metadata
+            metadata = PDFHandler.get_pdf_metadata(file_data)
+            
+            # Extract text
+            text = PDFHandler.extract_text_from_pdf(file_data)
+            
+            # Store in documents dict
+            self.pdf_documents[filename] = {
+                "content": file_data,
+                "text": text,
+                "metadata": metadata
+            }
+            
+            # Set as current PDF
+            self.current_pdf = filename
+            
+            return {
+                "success": True,
+                "filename": filename,
+                "pages": metadata.get("num_pages", 0),
+                "message": f"✅ Loaded: {filename} ({metadata.get('num_pages', 0)} pages)"
+            }
+        
+        except Exception as e:
+            return {"success": False, "error": f"Error loading PDF: {str(e)}"}
+    
+    def get_pdf_names(self) -> list:
+        """Get list of loaded PDF filenames"""
+        return list(self.pdf_documents.keys())
+    
+    def set_current_pdf(self, filename: str = None) -> None:
+        """Set the current PDF for chat analysis"""
+        if filename is None or filename in self.pdf_documents:
+            self.current_pdf = filename
+    
+    def get_current_pdf(self) -> str:
+        """Get currently selected PDF filename"""
+        return self.current_pdf
+    
+    def get_pdf_text(self, filename: str = None) -> str:
+        """
+        Get text content of a PDF
+        
+        Args:
+            filename: PDF filename (None = current PDF)
+            
+        Returns:
+            Extracted PDF text
+        """
+        if filename is None:
+            filename = self.current_pdf
+        
+        if filename and filename in self.pdf_documents:
+            return self.pdf_documents[filename]["text"]
+        
+        return ""
+    
+    def get_pdf_metadata(self, filename: str = None) -> Dict[str, Any]:
+        """
+        Get metadata of a PDF
+        
+        Args:
+            filename: PDF filename (None = current PDF)
+            
+        Returns:
+            PDF metadata dictionary
+        """
+        if filename is None:
+            filename = self.current_pdf
+        
+        if filename and filename in self.pdf_documents:
+            return self.pdf_documents[filename]["metadata"]
+        
+        return {}
+    
+    def clear_pdfs(self) -> None:
+        """Clear all loaded PDF documents"""
+        self.pdf_documents = {}
+        self.current_pdf = None
