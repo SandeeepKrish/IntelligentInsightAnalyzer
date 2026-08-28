@@ -52,6 +52,14 @@ st.caption("AI-powered multi-domain data analysis with advanced temporal and agg
 # Initialize Session State
 # ============================================================================
 
+# Initialize session state variables for persistent file storage
+if "uploaded_data" not in st.session_state:
+    st.session_state.uploaded_data = None  # Store DataFrame
+if "uploaded_filename" not in st.session_state:
+    st.session_state.uploaded_filename = None  # Store filename
+if "uploaded_pdfs" not in st.session_state:
+    st.session_state.uploaded_pdfs = {}  # Store PDFs
+
 @st.cache_resource
 def get_analyzer_service():
     """Initialize the analyzer service (cached for session)"""
@@ -118,6 +126,10 @@ with st.sidebar:
                 # Load the data
                 df = service.load_data(uploaded_file.name, uploaded_file.getvalue())
                 
+                # Store in session_state for persistence across refreshes
+                st.session_state.uploaded_data = df
+                st.session_state.uploaded_filename = uploaded_file.name
+                
                 st.success(f"✅ Loaded: {uploaded_file.name}")
                 
                 # Display dataset stats
@@ -134,6 +146,23 @@ with st.sidebar:
             except Exception as e:
                 st.error(f"❌ Error loading file: {str(e)}")
                 st.session_state.file_loaded = False
+    
+    # If file was previously loaded, restore it from session_state
+    elif st.session_state.uploaded_data is not None:
+        st.success(f"✅ Loaded: {st.session_state.uploaded_filename}")
+        df = st.session_state.uploaded_data
+        service.current_dataframe = df
+        service.data_context = service.data_analyzer.get_data_summary(df)
+        
+        # Display dataset stats
+        st.metric("Rows", f"{len(df):,}")
+        st.metric("Columns", len(df.columns))
+        
+        # Data quality score
+        quality = service.get_data_quality_metrics()
+        st.metric("Quality Score", f"{quality['quality_score']:.1f}%")
+        
+        st.session_state.file_loaded = True
     
     # PDF Upload Section
     st.divider()
@@ -192,6 +221,10 @@ with st.sidebar:
             service.current_dataframe = None
             service.data_context = ""
             st.session_state.file_loaded = False
+            st.session_state.uploaded_data = None
+            st.session_state.uploaded_filename = None
+            st.success("✅ Data file cleared!")
+            st.rerun()
             st.success("✅ Data file cleared!")
             st.rerun()
     
