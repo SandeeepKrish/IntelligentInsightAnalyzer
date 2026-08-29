@@ -6,7 +6,8 @@ Run this separately from Streamlit
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
+from typing import Optional
 import uuid
 import os
 from dotenv import load_dotenv
@@ -49,8 +50,8 @@ class AuthResponse(BaseModel):
     """Response model for authentication"""
     success: bool
     message: str
-    session_token: str = None
-    email: str = None
+    session_token: Optional[str] = None
+    email: Optional[str] = None
 
 
 # ============================================================================
