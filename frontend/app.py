@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ============================================================================
-# Authentication Check
+# Authentication Check - Initialize State
 # ============================================================================
 
 # Initialize authentication state
@@ -28,33 +28,6 @@ if "session_token" not in st.session_state:
     st.session_state.session_token = None
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
-
-# If not authenticated, redirect to login page
-if not st.session_state.authenticated:
-    st.set_page_config(
-        page_title="Login - IntelligentInsightAnalyzer",
-        page_icon="🔐",
-        layout="centered"
-    )
-    
-    st.title("🔐 IntelligentInsightAnalyzer")
-    st.markdown("""
-    <center>
-        <h3>Please login to continue</h3>
-    </center>
-    """, unsafe_allow_html=True)
-    
-    st.divider()
-    st.info("Go to the **Login** page in the sidebar to authenticate")
-    
-    with st.sidebar:
-        st.markdown("""
-        ### Pages
-        - **Login** - Authenticate with your email
-        - **Main App** - Data analysis dashboard (after login)
-        """)
-    
-    st.stop()
 
 # Add backend src to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../backend/src'))
@@ -85,6 +58,31 @@ st.set_page_config(
 
 st.title("🔬 IntelligentInsightAnalyzer")
 st.caption("AI-powered multi-domain data analysis with advanced temporal and aggregation analytics")
+
+# ============================================================================
+# Show Login Banner if Not Authenticated
+# ============================================================================
+
+if not st.session_state.authenticated:
+    st.error("""
+    🔐 **Please Login to Continue**
+    
+    Go to the **Login** page in the sidebar to authenticate with your email and OTP.
+    """)
+else:
+    # Show logout option
+    col1, col2, col3 = st.columns([10, 1, 1])
+    with col3:
+        if st.button("🚪 Logout"):
+            st.session_state.authenticated = False
+            st.session_state.session_token = None
+            st.session_state.user_email = None
+            st.success("✅ Logged out!")
+            import time
+            time.sleep(1)
+            st.rerun()
+    with col1:
+        st.caption(f"👤 Logged in as: **{st.session_state.user_email}**")
 
 
 # ============================================================================
@@ -142,44 +140,6 @@ except Exception as e:
 # ============================================================================
 
 with st.sidebar:
-    # Profile section
-    st.divider()
-    email = st.session_state.user_email
-    first_letter = email[0].upper() if email else "?"
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col1:
-        st.markdown(f"""
-        <div style="
-            width: 35px;
-            height: 35px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-        ">
-            {first_letter}
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.caption(f"👤 {email}")
-    
-    with col3:
-        if st.button("🚪", help="Logout"):
-            st.session_state.authenticated = False
-            st.session_state.session_token = None
-            st.session_state.user_email = None
-            st.success("✅ Logged out!")
-            import time
-            time.sleep(1)
-            st.rerun()
-    
-    st.divider()
     st.header("📁 Data Upload")
     
     uploaded_file = st.file_uploader(
