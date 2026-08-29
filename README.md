@@ -14,35 +14,29 @@ A professional-grade data analysis application with AI-powered multi-turn conver
 
 ## 🏗️ Project Structure
 
-```
-AI_Data_Analyst_Chatbot/
-├── src/
-│   ├── __init__.py              # Package exports
-│   ├── config/
-│   │   ├── __init__.py
-│   │   └── settings.py          # Centralized configuration
-│   ├── services/
-│   │   ├── __init__.py
-│   │   └── analyzer_service.py  # Business logic orchestrator
-│   ├── components/              # Reusable UI components
-│   │   ├── __init__.py
-│   │   ├── chat_interface.py    # Chat UI with streaming
-│   │   ├── data_explorer.py     # Dataset preview & histograms
-│   │   ├── data_quality.py      # Quality metrics & insights
-│   │   └── charts.py            # Chart visualization builder
-│   └── utils/                   # Core utilities
-│       ├── __init__.py
-│       ├── memory.py            # Conversation memory management
-│       ├── llm.py               # OpenAI streaming interface
-│       └── data_analyzer.py     # Data analysis utilities
-├── app.py                       # Minimal entry point (~140 lines)
-├── requirements.txt
-├── .env                         # API configuration (git-ignored)
-├── .env.example                 # Example configuration
-├── .gitignore
-└── README.md
-```
+IntelligentInsightAnalyzer is structured with a clear separation between **Frontend** (Streamlit UI) and **Backend** (Business Logic).
 
+```
+IntelligentInsightAnalyzer/
+│
+├── frontend/                 # User Interface Layer
+│   ├── app.py               # Entry point (Streamlit app)
+│   ├── .streamlit/          # Streamlit config
+│   └── requirements.txt      # UI dependencies
+│
+├── backend/                  # Business Logic Layer
+│   ├── src/
+│   │   ├── config/          # Configuration
+│   │   ├── services/        # Service orchestration
+│   │   ├── components/      # UI render functions
+│   │   └── utils/           # Core utilities
+│   └── requirements.txt      # Logic dependencies
+│
+├── requirements.txt          # Combined dependencies
+├── .env                      # Environment variables (API keys)
+├── .streamlit/              # Streamlit settings
+└── README.md                # Project documentation
+```
 ## 🚀 Getting Started
 
 ### 1. Install Dependencies
