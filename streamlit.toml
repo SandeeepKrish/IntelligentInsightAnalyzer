@@ -1,0 +1,9 @@
+[client]
+showErrorDetails = true
+
+[logger]
+level = "info"
+
+[server]
+# This tells Streamlit Cloud which app file to run
+mainModule = "frontend/app.py"
