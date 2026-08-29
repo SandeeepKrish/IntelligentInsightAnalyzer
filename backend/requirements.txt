@@ -1,6 +1,0 @@
-pandas
-numpy
-openpyxl
-openai
-python-dotenv
-PyPDF2
