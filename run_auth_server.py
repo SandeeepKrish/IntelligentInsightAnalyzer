@@ -23,7 +23,7 @@ if __name__ == "__main__":
     ║  To login:                                                 ║
     ║  1. Open http://localhost:8501 in browser                 ║
     ║  2. Go to Login page                                       ║
-    ║  3. Enter email and check console for OTP                 ║
+    ║  3. Enter email and OTP will be sent to your email        ║
     ╚════════════════════════════════════════════════════════════╝
     """)
     
