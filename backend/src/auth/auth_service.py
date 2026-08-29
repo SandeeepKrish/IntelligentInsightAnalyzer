@@ -4,10 +4,7 @@ Run this separately from Streamlit
 """
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
 import uuid
 import os
 from dotenv import load_dotenv
@@ -32,29 +29,6 @@ app.add_middleware(
 
 
 # ============================================================================
-# Request/Response Models
-# ============================================================================
-
-class EmailRequest(BaseModel):
-    """Request model for OTP sending"""
-    email: str
-
-
-class OTPVerifyRequest(BaseModel):
-    """Request model for OTP verification"""
-    email: str
-    otp: str
-
-
-class AuthResponse(BaseModel):
-    """Response model for authentication"""
-    success: bool
-    message: str
-    session_token: Optional[str] = None
-    email: Optional[str] = None
-
-
-# ============================================================================
 # Auth Endpoints
 # ============================================================================
 
@@ -65,33 +39,17 @@ def health_check():
 
 
 @app.post("/auth/send-otp")
-def send_otp(request: EmailRequest):
-    """
-    Send OTP to email
-    
-    Args:
-        email: User email address
-    
-    Returns:
-        Success message
-    """
+def send_otp(data: dict):
+    """Send OTP to email"""
     try:
-        email = request.email.lower().strip()
+        email = data.get("email", "").lower().strip()
         
-        # Validate email format
-        if '@' not in email or '.' not in email:
+        if not email or "@" not in email or "." not in email:
             raise HTTPException(status_code=400, detail="Invalid email format")
         
-        # Create user if doesn't exist
         db.create_user(email)
-        
-        # Generate OTP
         otp_code = email_service.generate_otp()
-        
-        # Save OTP to database
         db.save_otp(email, otp_code, validity_minutes=5)
-        
-        # Send email
         email_sent = email_service.send_otp_email(email, otp_code)
         
         if not email_sent:
@@ -109,29 +67,16 @@ def send_otp(request: EmailRequest):
 
 
 @app.post("/auth/verify-otp")
-def verify_otp(request: OTPVerifyRequest):
-    """
-    Verify OTP and create session
-    
-    Args:
-        email: User email
-        otp: OTP code
-    
-    Returns:
-        Session token if successful
-    """
+def verify_otp(data: dict):
+    """Verify OTP and create session"""
     try:
-        email = request.email.lower().strip()
-        otp_code = request.otp.strip()
+        email = data.get("email", "").lower().strip()
+        otp_code = data.get("otp", "").strip()
         
-        # Verify OTP
         if not db.verify_otp(email, otp_code):
             raise HTTPException(status_code=401, detail="Invalid or expired OTP")
         
-        # Create session token
         session_token = str(uuid.uuid4())
-        
-        # Save session
         db.create_session(email, session_token, validity_hours=24)
         
         return {
@@ -148,18 +93,10 @@ def verify_otp(request: OTPVerifyRequest):
 
 
 @app.post("/auth/verify-session")
-def verify_session(request: EmailRequest):
-    """
-    Verify session token
-    
-    Args:
-        email: User email (used as session identifier)
-    
-    Returns:
-        User info if session valid
-    """
+def verify_session(data: dict):
+    """Verify session token"""
     try:
-        session_token = request.email  # Passed as email field for simplicity
+        session_token = data.get("email", "")
         
         user_info = db.verify_session(session_token)
         
@@ -178,19 +115,10 @@ def verify_session(request: EmailRequest):
 
 
 @app.post("/auth/logout")
-def logout(request: EmailRequest):
-    """
-    Logout user (invalidate session)
-    
-    Args:
-        email: Session token
-    
-    Returns:
-        Success message
-    """
+def logout(data: dict):
+    """Logout user"""
     try:
-        session_token = request.email  # Passed as email field
-        
+        session_token = data.get("email", "")
         db.invalidate_session(session_token)
         
         return {
