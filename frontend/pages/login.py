@@ -7,7 +7,7 @@ import requests
 import time
 
 # API endpoint (change to your server URL)
-API_URL = "http://localhost:8000"
+API_URL = "http://localhost:8001"
 
 def init_session_state():
     """Initialize session state variables"""
