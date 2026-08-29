@@ -1,27 +1,16 @@
 """
-IntelligentInsightAnalyzer - Main Package
-Professional structure with config, services, components, and utilities
+IntelligentInsightAnalyzer Backend - Main Package
 """
 
-from .config import AppConfig
-from .services import AnalyzerService
-from .components import (
-    render_chat_interface,
-    render_data_explorer,
-    render_data_quality,
-    render_charts,
-    render_advanced_analysis
-)
+# Only import what's needed for auth service
+from .auth import email_service
+from .database import db
 
 __version__ = "2.0.0"
 __author__ = "IntelligentInsightAnalyzer Team"
 
 __all__ = [
-    "AppConfig",
-    "AnalyzerService",
-    "render_chat_interface",
-    "render_data_explorer",
-    "render_data_quality",
-    "render_charts",
-    "render_advanced_analysis"
+    "email_service",
+    "db"
 ]
+
