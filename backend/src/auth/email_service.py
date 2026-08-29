@@ -12,7 +12,7 @@ from email.mime.multipart import MIMEMultipart
 class EmailService:
     """Email service for OTP delivery"""
     
-    def __init__(self, use_mock: bool = True):
+    def __init__(self, use_mock: bool = False):
         """
         Initialize email service
         
