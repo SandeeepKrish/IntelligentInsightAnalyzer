@@ -1,7 +1,10 @@
+# Frontend Requirements
 streamlit
+plotly
+
+# Backend Requirements
 pandas
 numpy
-plotly
 openpyxl
 openai
 python-dotenv

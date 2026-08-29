@@ -17,8 +17,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Add src to Python path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Add backend src to Python path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../backend/src'))
 
 from config import AppConfig
 from services import AnalyzerService
