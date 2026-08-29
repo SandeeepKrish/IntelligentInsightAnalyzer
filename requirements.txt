@@ -1,6 +1,7 @@
 # Frontend Requirements
 streamlit
 plotly
+requests
 
 # Backend Requirements
 pandas
@@ -9,3 +10,9 @@ openpyxl
 openai
 python-dotenv
 PyPDF2
+
+# Authentication Requirements
+fastapi
+uvicorn
+pydantic
+email-validator
