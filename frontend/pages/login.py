@@ -7,7 +7,7 @@ import requests
 import time
 
 # API endpoint (change to your server URL)
-API_URL = "http://localhost:8001"
+API_URL = "https://intelligentinsightanalyzer.onrender.com"
 
 def init_session_state():
     """Initialize session state variables"""
