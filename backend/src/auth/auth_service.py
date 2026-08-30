@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 import os
@@ -37,18 +37,13 @@ def root():
     return {"status": "ok", "service": "IntelligentInsightAnalyzer Auth", "message": "Backend is running", "docs": "/docs"}
 
 
-@app.get("/docs")
-def docs():
-    return {"message": "Go to /docs for interactive API documentation"}
-
-
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 
 @app.post("/auth/send-otp")
-async def send_otp(request):
+async def send_otp(request: Request):
     try:
         body = await request.json()
         email = body.get("email", "").lower().strip()
@@ -83,7 +78,7 @@ async def send_otp(request):
 
 
 @app.post("/auth/verify-otp")
-async def verify_otp(request):
+async def verify_otp(request: Request):
     try:
         body = await request.json()
         email = body.get("email", "").lower().strip()
@@ -123,7 +118,7 @@ async def verify_otp(request):
 
 
 @app.post("/auth/verify-session")
-async def verify_session(request):
+async def verify_session(request: Request):
     try:
         body = await request.json()
         token = body.get("email", "")
@@ -148,7 +143,7 @@ async def verify_session(request):
 
 
 @app.post("/auth/logout")
-async def logout(request):
+async def logout(request: Request):
     try:
         body = await request.json()
         token = body.get("email", "")
@@ -184,3 +179,4 @@ def get_user(email: str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
