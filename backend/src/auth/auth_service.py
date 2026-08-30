@@ -34,7 +34,12 @@ init_db()
 
 @app.get("/")
 def root():
-    return {"status": "ok", "service": "IntelligentInsightAnalyzer Auth"}
+    return {"status": "ok", "service": "IntelligentInsightAnalyzer Auth", "message": "Backend is running", "docs": "/docs"}
+
+
+@app.get("/docs")
+def docs():
+    return {"message": "Go to /docs for interactive API documentation"}
 
 
 @app.get("/health")
