@@ -1,8 +1,3 @@
-"""
-FastAPI Authentication Service
-Run this separately from Streamlit
-"""
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
@@ -12,13 +7,10 @@ from dotenv import load_dotenv
 from database.models import db
 from auth.email_service import email_service
 
-# Load environment variables
 load_dotenv()
 
-# Create FastAPI app
-app = FastAPI(title="IntelligentInsightAnalyzer Auth Service")
+app = FastAPI()
 
-# Enable CORS for Streamlit
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,146 +20,85 @@ app.add_middleware(
 )
 
 
-# ============================================================================
-# Auth Endpoints
-# ============================================================================
-
 @app.get("/health")
-def health_check():
-    """Health check endpoint"""
-    return {"status": "ok", "service": "auth"}
+def health():
+    return {"status": "ok"}
 
 
 @app.post("/auth/send-otp")
-def send_otp(data: dict):
-    """Send OTP to email"""
+async def send_otp(request):
     try:
-        email = data.get("email", "").lower().strip()
+        body = await request.json()
+        email = body.get("email", "").lower().strip()
         
-        if not email or "@" not in email or "." not in email:
-            raise HTTPException(status_code=400, detail="Invalid email format")
+        if not email or "@" not in email:
+            raise HTTPException(status_code=400, detail="Invalid email")
         
         db.create_user(email)
-        otp_code = email_service.generate_otp()
-        db.save_otp(email, otp_code, validity_minutes=5)
-        email_sent = email_service.send_otp_email(email, otp_code)
+        otp = email_service.generate_otp()
+        db.save_otp(email, otp)
+        email_service.send_otp_email(email, otp)
         
-        if not email_sent:
-            raise HTTPException(status_code=500, detail="Failed to send email")
-        
-        return {
-            "success": True,
-            "message": f"OTP sent to {email}. Valid for 5 minutes."
-        }
-    
-    except HTTPException:
-        raise
+        return {"success": True, "message": "OTP sent"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/auth/verify-otp")
-def verify_otp(data: dict):
-    """Verify OTP and create session"""
+async def verify_otp(request):
     try:
-        email = data.get("email", "").lower().strip()
-        otp_code = data.get("otp", "").strip()
+        body = await request.json()
+        email = body.get("email", "").lower().strip()
+        otp = body.get("otp", "").strip()
         
-        if not db.verify_otp(email, otp_code):
-            raise HTTPException(status_code=401, detail="Invalid or expired OTP")
+        if not db.verify_otp(email, otp):
+            raise HTTPException(status_code=401, detail="Invalid OTP")
         
-        session_token = str(uuid.uuid4())
-        db.create_session(email, session_token, validity_hours=24)
+        token = str(uuid.uuid4())
+        db.create_session(email, token)
         
-        return {
-            "success": True,
-            "message": "Login successful",
-            "session_token": session_token,
-            "email": email
-        }
-    
-    except HTTPException:
-        raise
+        return {"success": True, "session_token": token, "email": email}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/auth/verify-session")
-def verify_session(data: dict):
-    """Verify session token"""
+async def verify_session(request):
     try:
-        session_token = data.get("email", "")
+        body = await request.json()
+        token = body.get("email", "")
         
-        user_info = db.verify_session(session_token)
+        user = db.verify_session(token)
+        if not user:
+            raise HTTPException(status_code=401, detail="Invalid session")
         
-        if not user_info:
-            raise HTTPException(status_code=401, detail="Invalid or expired session")
-        
-        return {
-            "success": True,
-            "email": user_info['email']
-        }
-    
-    except HTTPException:
-        raise
+        return {"success": True, "email": user["email"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/auth/logout")
-def logout(data: dict):
-    """Logout user"""
+async def logout(request):
     try:
-        session_token = data.get("email", "")
-        db.invalidate_session(session_token)
-        
-        return {
-            "success": True,
-            "message": "Logged out successfully"
-        }
-    
+        body = await request.json()
+        token = body.get("email", "")
+        db.invalidate_session(token)
+        return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/auth/user/{email}")
 def get_user(email: str):
-    """Get user information"""
     try:
         user = db.get_user(email.lower().strip())
-        
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        return {
-            "success": True,
-            "user": user
-        }
-    
-    except HTTPException:
-        raise
+            raise HTTPException(status_code=404, detail="Not found")
+        return {"success": True, "user": user}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ============================================================================
-# Main
-# ============================================================================
-
 if __name__ == "__main__":
     import uvicorn
-    
-    print("""
-    ╔════════════════════════════════════════════════════════════╗
-    ║  IntelligentInsightAnalyzer - Auth Service                ║
-    ║  Running on: http://localhost:8000                         ║
-    ║  Docs: http://localhost:8000/docs                          ║
-    ╚════════════════════════════════════════════════════════════╝
-    """)
-    
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000)
