@@ -1,18 +1,29 @@
 [theme]
-primaryColor = "#1f77ff"
-backgroundColor = "#0e1117"
-secondaryBackgroundColor = "#161b22"
-textColor = "#e6edf3"
+primaryColor = "#1f77b4"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f0f0"
+textColor = "#262730"
 font = "sans serif"
 
 [client]
+# Suppress browser warnings about unrecognized features
 showErrorDetails = true
-toolbarMode = "viewer"
+showWarningOnDirectExecution = false
+toolbarMode = "minimal"
 
 [logger]
-level = "info"
+level = "warning"
+
+[browser]
+gatherUsageStats = false
 
 [server]
-maxUploadSize = 200
-enableCORS = false
+port = 8501
 headless = true
+runOnSave = true
+enableCORS = true
+enableXsrfProtection = true
+maxUploadSize = 200
+
+[client.toolbarMode]
+logger.level = "error"

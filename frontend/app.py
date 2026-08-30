@@ -74,6 +74,16 @@ else:
     col1, col2, col3 = st.columns([10, 1, 1])
     with col3:
         if st.button("🚪 Logout"):
+            import requests
+            API_URL = "https://intelligentinsightanalyzer.onrender.com"  # Production backend
+            try:
+                requests.post(
+                    f"{API_URL}/auth/logout",
+                    json={"session_token": st.session_state.session_token},
+                    timeout=10
+                )
+            except:
+                pass
             st.session_state.authenticated = False
             st.session_state.session_token = None
             st.session_state.user_email = None

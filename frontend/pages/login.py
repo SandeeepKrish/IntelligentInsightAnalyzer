@@ -1,15 +1,135 @@
 """
 Login page for IntelligentInsightAnalyzer
+Professional authentication with OTP via email
 """
 
 import streamlit as st
 import requests
 import time
+from datetime import datetime
+
+# ============================================================================
+# Suppress Browser Warnings
+# ============================================================================
+
+# Inject JavaScript to suppress feature detection warnings
+st.markdown("""
+<script>
+// Suppress "Unrecognized feature" warnings from Permissions Policy checks
+if (window.console) {
+    const originalWarn = window.console.warn;
+    const originalError = window.console.error;
+    
+    window.console.warn = function(...args) {
+        const message = args[0]?.toString() || '';
+        // Suppress known harmless warnings
+        if (message.includes('Unrecognized feature') ||
+            message.includes('ambient-light-sensor') ||
+            message.includes('battery') ||
+            message.includes('document-domain') ||
+            message.includes('layout-animations') ||
+            message.includes('legacy-image-formats') ||
+            message.includes('oversized-images') ||
+            message.includes('vr') ||
+            message.includes('wake-lock')) {
+            return;
+        }
+        originalWarn.apply(window.console, args);
+    };
+    
+    window.console.error = function(...args) {
+        const message = args[0]?.toString() || '';
+        if (message.includes('Unrecognized feature')) {
+            return;
+        }
+        originalError.apply(window.console, args);
+    };
+}
+</script>
+""", unsafe_allow_html=True)
+
+# ============================================================================
+# Configuration
+# ============================================================================
 
 # API endpoint (change to your server URL)
-API_URL = "https://intelligentinsightanalyzer.onrender.com"
+# For local testing: http://localhost:9000
+# For production: https://intelligentinsightanalyzer.onrender.com
+API_URL = "https://intelligentinsightanalyzer.onrender.com"  # Production Render backend
 
-def init_session_state():
+# Configuration
+API_TIMEOUT = 10  # seconds
+OTP_VALID_MINUTES = 5
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+def send_otp_request(email):
+    """Send OTP request to backend"""
+    try:
+        response = requests.post(
+            f"{API_URL}/auth/send-otp",
+            json={"email": email},
+            timeout=API_TIMEOUT
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                return {"success": True, "message": data.get("message", "OTP sent successfully")}
+            else:
+                return {"success": False, "message": data.get("message", "Failed to send OTP")}
+        else:
+            return {"success": False, "message": f"Server error: {response.status_code}"}
+    
+    except requests.exceptions.ConnectionError:
+        return {
+            "success": False, 
+            "message": "❌ Cannot connect to auth server. Is the backend running?",
+            "details": f"Expected: {API_URL}"
+        }
+    except requests.exceptions.Timeout:
+        return {"success": False, "message": "⏱️ Request timed out. Backend is slow or unreachable."}
+    except Exception as e:
+        return {"success": False, "message": f"Error: {str(e)}"}
+
+
+def verify_otp_request(email, otp):
+    """Verify OTP and get session token"""
+    try:
+        response = requests.post(
+            f"{API_URL}/auth/verify-otp",
+            json={"email": email, "otp": otp},
+            timeout=API_TIMEOUT
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                return {
+                    "success": True,
+                    "session_token": data.get("session_token"),
+                    "email": data.get("email"),
+                    "message": "OTP verified successfully"
+                }
+            else:
+                return {"success": False, "message": data.get("message", "Invalid or expired OTP")}
+        else:
+            return {"success": False, "message": f"Server error: {response.status_code}"}
+    
+    except requests.exceptions.ConnectionError:
+        return {"success": False, "message": "Cannot connect to auth server"}
+    except requests.exceptions.Timeout:
+        return {"success": False, "message": "Request timed out"}
+    except Exception as e:
+        return {"success": False, "message": f"Error: {str(e)}"}
+
+
+# ============================================================================
+# Session State & Initialization
+# ============================================================================
     """Initialize session state variables"""
     if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
@@ -30,17 +150,57 @@ def render_login_page():
         layout="centered"
     )
     
+    # Custom CSS for better styling
     st.markdown("""
     <style>
         .login-container {
-            max-width: 400px;
+            max-width: 450px;
             margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .auth-header h1 {
+            color: #1f77b4;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+        
+        .step {
+            text-align: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background-color: #f0f0f0;
+            flex: 1;
+        }
+        
+        .step.active {
+            background-color: #1f77b4;
+            color: white;
+        }
+        
+        .info-box {
+            background-color: #f0f8ff;
+            border-left: 4px solid #1f77b4;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.25rem;
         }
     </style>
     """, unsafe_allow_html=True)
     
     st.title("🔐 IntelligentInsightAnalyzer")
-    st.caption("Login to continue with your analysis")
+    st.caption("Secure email-based authentication with OTP")
     
     st.divider()
     
@@ -61,29 +221,20 @@ def render_login_page():
                 if not email or "@" not in email:
                     st.error("❌ Please enter a valid email address")
                 else:
-                    with st.spinner("Sending OTP..."):
-                        try:
-                            response = requests.post(
-                                f"{API_URL}/auth/send-otp",
-                                json={"email": email},
-                                timeout=10
-                            )
-                            
-                            if response.status_code == 200:
-                                st.session_state.user_email = email
-                                st.session_state.login_step = "otp"
-                                st.success("✅ OTP sent! Check your console or email.")
-                                st.info("💡 In mock mode, OTP appears in console/terminal")
-                                time.sleep(2)
-                                st.rerun()
-                            else:
-                                st.error(f"❌ Error: {response.json().get('detail', 'Failed to send OTP')}")
+                    with st.spinner("🔄 Sending OTP..."):
+                        result = send_otp_request(email)
                         
-                        except requests.exceptions.ConnectionError:
-                            st.error("❌ Cannot connect to auth server. Make sure FastAPI is running on http://localhost:8000")
-                            st.info("Run: `cd backend && python -m auth.auth_service`")
-                        except Exception as e:
-                            st.error(f"❌ Error: {str(e)}")
+                        if result.get("success"):
+                            st.session_state.user_email = email
+                            st.session_state.login_step = "otp"
+                            st.success(f"✅ {result['message']}")
+                            st.info(f"💡 OTP valid for {OTP_VALID_MINUTES} minutes")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error(result['message'])
+                            if result.get('details'):
+                                st.code(result['details'])
         
         with col2:
             if st.button("📚 How it works?", use_container_width=True):
@@ -113,32 +264,18 @@ def render_login_page():
                 if not otp or len(otp) != 6:
                     st.error("❌ Please enter a 6-digit OTP")
                 else:
-                    with st.spinner("Verifying OTP..."):
-                        try:
-                            response = requests.post(
-                                f"{API_URL}/auth/verify-otp",
-                                json={
-                                    "email": st.session_state.user_email,
-                                    "otp": otp
-                                },
-                                timeout=10
-                            )
-                            
-                            if response.status_code == 200:
-                                data = response.json()
-                                st.session_state.authenticated = True
-                                st.session_state.session_token = data['session_token']
-                                st.session_state.user_email = data['email']
-                                st.success("✅ Login successful!")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.error("❌ Invalid or expired OTP")
+                    with st.spinner("🔄 Verifying OTP..."):
+                        result = verify_otp_request(st.session_state.user_email, otp)
                         
-                        except requests.exceptions.ConnectionError:
-                            st.error("❌ Cannot connect to auth server")
-                        except Exception as e:
-                            st.error(f"❌ Error: {str(e)}")
+                        if result.get("success"):
+                            st.session_state.authenticated = True
+                            st.session_state.session_token = result['session_token']
+                            st.session_state.user_email = result['email']
+                            st.success("✅ Login successful!")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error(result['message'])
         
         with col2:
             if st.button("← Back", use_container_width=True):
@@ -156,71 +293,121 @@ def render_authenticated_page():
         layout="wide"
     )
     
-    # Sidebar profile
+    # Sidebar profile with enhanced design
     with st.sidebar:
         st.divider()
         
-        # Profile badge
+        # Profile section with better styling
         email = st.session_state.user_email
         first_letter = email[0].upper() if email else "?"
         
-        col1, col2 = st.columns([1, 3])
+        col1, col2 = st.columns([0.8, 2])
         with col1:
             st.markdown(f"""
             <div style="
-                width: 40px;
-                height: 40px;
-                background-color: #1f77b4;
+                width: 50px;
+                height: 50px;
+                background: linear-gradient(135deg, #1f77b4 0%, #0d47a1 100%);
                 border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 color: white;
                 font-weight: bold;
-                font-size: 18px;
+                font-size: 20px;
+                box-shadow: 0 2px 8px rgba(31, 119, 180, 0.3);
             ">
                 {first_letter}
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
-            st.markdown(f"**{email}**")
-            st.caption("Logged in")
+            st.markdown(f"""
+            <div>
+                <p style="margin: 0; font-weight: bold; color: #1f77b4;">{email}</p>
+                <p style="margin: 0; font-size: 12px; color: #666;">✅ Authenticated</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.divider()
         
-        if st.button("🚪 Logout", use_container_width=True):
-            with st.spinner("Logging out..."):
-                try:
-                    requests.post(
-                        f"{API_URL}/auth/logout",
-                        json={"email": st.session_state.session_token},
-                        timeout=10
-                    )
-                except:
-                    pass
-                
-                st.session_state.authenticated = False
-                st.session_state.session_token = None
-                st.session_state.user_email = None
-                st.success("✅ Logged out!")
-                time.sleep(1)
+        # Logout button with better styling
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🚪 Logout", use_container_width=True, help="End your session"):
+                with st.spinner("Logging out..."):
+                    try:
+                        requests.post(
+                            f"{API_URL}/auth/logout",
+                            json={"session_token": st.session_state.session_token},
+                            timeout=API_TIMEOUT
+                        )
+                    except:
+                        pass  # Ignore errors during logout
+                    
+                    st.session_state.authenticated = False
+                    st.session_state.session_token = None
+                    st.session_state.user_email = None
+                    st.success("✅ Logged out!")
+                    time.sleep(1)
+                    st.rerun()
+        
+        with col2:
+            if st.button("🔄 Refresh", use_container_width=True, help="Refresh session"):
                 st.rerun()
         
         st.divider()
+        
+        # Session info
+        st.caption("📋 Session Information")
+        st.info(f"""
+        **Email:** {email}
+        **Status:** Active ✅
+        **Valid for:** 24 hours
+        """)
     
     # Main content
     st.title("🏠 Welcome to IntelligentInsightAnalyzer")
-    st.write(f"Hello, **{email}**!")
+    st.write(f"Hello, **{email}**! 👋")
+    
+    st.success("""
+    ✅ **You are now authenticated!** 
+    
+    Your session is active and secure. You can now:
+    """)
+    
+    # Feature cards
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("""
+        ### 📊 Data Analysis
+        - Upload CSV/Excel files
+        - Explore datasets
+        - View statistics
+        """)
+    
+    with col2:
+        st.markdown("""
+        ### 🤖 AI Chat
+        - Ask questions about data
+        - Get insights
+        - Multi-turn conversations
+        """)
+    
+    with col3:
+        st.markdown("""
+        ### 📈 Advanced Features
+        - Custom charts
+        - Data quality checks
+        - Temporal analytics
+        """)
     
     st.info("""
-    ✅ You are now authenticated! 
-    
-    Go to the main app to:
-    - Upload CSV/Excel files
-    - Perform data analysis
-    - Chat with AI about your data
-    - View advanced analytics
+    👈 **Next Steps:**
+    1. Go back to the main app page
+    2. Upload a CSV or Excel file from the sidebar
+    3. Use the AI Chat tab to analyze your data
     """)
 
 
