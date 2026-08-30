@@ -63,6 +63,22 @@ OTP_VALID_MINUTES = 5
 
 
 # ============================================================================
+# Session State & Initialization
+# ============================================================================
+
+def init_session_state():
+    """Initialize session state variables"""
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+    if "session_token" not in st.session_state:
+        st.session_state.session_token = None
+    if "user_email" not in st.session_state:
+        st.session_state.user_email = None
+    if "login_step" not in st.session_state:
+        st.session_state.login_step = "email"  # email or otp
+
+
+# ============================================================================
 # Helper Functions
 # ============================================================================
 
