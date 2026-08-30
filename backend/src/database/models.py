@@ -2,9 +2,9 @@
 Database models for authentication
 """
 
-from datetime import datetime, timedelta
 import sqlite3
 import os
+from datetime import datetime, timedelta
 
 # Database file path
 DB_PATH = os.path.join(os.path.dirname(__file__), 'auth.db')
@@ -67,7 +67,7 @@ class Database:
         conn.commit()
         conn.close()
     
-    def create_user(self, email: str) -> dict:
+    def create_user(self, email):
         """Create or get user by email"""
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -83,17 +83,17 @@ class Database:
             # User already exists
             cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
             row = cursor.fetchone()
-            user_id = row['id']
+            user_id = row['id'] if row else None
         
         conn.close()
         return {'id': user_id, 'email': email}
     
-    def save_otp(self, email: str, otp_code: str, validity_minutes: int = 5) -> bool:
+    def save_otp(self, email, otp_code, validity_minutes=5):
         """Save OTP to database"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
-        expires_at = datetime.utcnow() + timedelta(minutes=validity_minutes)
+        expires_at = (datetime.utcnow() + timedelta(minutes=validity_minutes)).isoformat()
         
         cursor.execute('''
             INSERT INTO otps (email, otp_code, expires_at)
@@ -104,7 +104,7 @@ class Database:
         conn.close()
         return True
     
-    def verify_otp(self, email: str, otp_code: str) -> bool:
+    def verify_otp(self, email, otp_code):
         """Verify OTP"""
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -122,10 +122,13 @@ class Database:
             return False
         
         # Check if OTP is expired
-        expires_at = datetime.fromisoformat(row['expires_at'])
-        if datetime.utcnow() > expires_at:
-            conn.close()
-            return False
+        try:
+            expires_at = datetime.fromisoformat(row['expires_at'])
+            if datetime.utcnow() > expires_at:
+                conn.close()
+                return False
+        except:
+            pass
         
         # Mark OTP as used
         cursor.execute('''
@@ -143,12 +146,12 @@ class Database:
         conn.close()
         return True
     
-    def create_session(self, email: str, session_token: str, validity_hours: int = 24) -> bool:
+    def create_session(self, email, session_token, validity_hours=24):
         """Create session"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
-        expires_at = datetime.utcnow() + timedelta(hours=validity_hours)
+        expires_at = (datetime.utcnow() + timedelta(hours=validity_hours)).isoformat()
         
         cursor.execute('''
             INSERT INTO sessions (email, session_token, expires_at)
@@ -159,7 +162,7 @@ class Database:
         conn.close()
         return True
     
-    def verify_session(self, session_token: str) -> dict:
+    def verify_session(self, session_token):
         """Verify session token"""
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -176,15 +179,18 @@ class Database:
             return None
         
         # Check if session is expired
-        expires_at = datetime.fromisoformat(row['expires_at'])
-        if datetime.utcnow() > expires_at:
-            conn.close()
-            return None
+        try:
+            expires_at = datetime.fromisoformat(row['expires_at'])
+            if datetime.utcnow() > expires_at:
+                conn.close()
+                return None
+        except:
+            pass
         
         conn.close()
         return {'email': row['email']}
     
-    def invalidate_session(self, session_token: str) -> bool:
+    def invalidate_session(self, session_token):
         """Invalidate session (logout)"""
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -198,7 +204,7 @@ class Database:
         conn.close()
         return True
     
-    def get_user(self, email: str) -> dict:
+    def get_user(self, email):
         """Get user by email"""
         conn = self.get_connection()
         cursor = conn.cursor()
@@ -220,3 +226,4 @@ class Database:
 
 # Global database instance
 db = Database()
+
