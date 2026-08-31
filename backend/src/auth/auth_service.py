@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import sqlite3
-import os
 import uuid
 import random
 from datetime import datetime, timedelta
@@ -17,57 +15,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '../database/auth.db')
-_DB_INITIALIZED = False
-
-
-def init_db():
-    """Initialize SQLite database with required tables (lazy load)"""
-    global _DB_INITIALIZED
-    if _DB_INITIALIZED:
-        return
-    
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY, 
-        email TEXT UNIQUE, 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-        last_login TIMESTAMP, 
-        is_active BOOLEAN DEFAULT 1
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS otps (
-        id INTEGER PRIMARY KEY, 
-        email TEXT, 
-        otp_code TEXT, 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-        expires_at TIMESTAMP, 
-        is_used BOOLEAN DEFAULT 0, 
-        used_at TIMESTAMP
-    )''')
-    c.execute('''CREATE TABLE IF NOT EXISTS sessions (
-        id INTEGER PRIMARY KEY, 
-        email TEXT, 
-        session_token TEXT UNIQUE, 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-        expires_at TIMESTAMP, 
-        is_active BOOLEAN DEFAULT 1
-    )''')
-    conn.commit()
-    conn.close()
-    _DB_INITIALIZED = True
+# In-memory storage (fast, no I/O)
+users_db = {}
+otps_db = {}
+sessions_db = {}
 
 
 @app.get("/")
 def root():
-    init_db()  # Lazy initialize on first request
     return {"status": "ok", "service": "IntelligentInsightAnalyzer Auth", "message": "Backend is running", "docs": "/docs"}
 
 
 @app.get("/health")
 def health():
-    init_db()  # Lazy initialize on first request
     return {"status": "ok"}
 
 
@@ -75,7 +35,6 @@ def health():
 async def send_otp(request: Request):
     """Send OTP to user email"""
     try:
-        init_db()  # Lazy initialize
         body = await request.json()
         email = body.get("email", "").lower().strip()
         
@@ -83,21 +42,17 @@ async def send_otp(request: Request):
             return {"success": False, "message": "Invalid email address"}
         
         # Create user if doesn't exist
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("INSERT OR IGNORE INTO users (email) VALUES (?)", (email,))
-        conn.commit()
+        if email not in users_db:
+            users_db[email] = {"created_at": datetime.utcnow().isoformat()}
         
         # Generate OTP
         otp = "".join(random.choices("0123456789", k=6))
-        expires = (datetime.utcnow() + timedelta(minutes=5)).isoformat()
+        expires = datetime.utcnow() + timedelta(minutes=5)
         
-        # Save OTP to database
-        c.execute("INSERT INTO otps (email, otp_code, expires_at) VALUES (?, ?, ?)", (email, otp, expires))
-        conn.commit()
-        conn.close()
+        # Save OTP
+        otps_db[email] = {"otp": otp, "expires_at": expires.isoformat(), "used": False}
         
-        # Send OTP via email service (real SMTP or mock mode)
+        # Send OTP
         email_sent = email_service.send_otp_email(email, otp)
         
         if email_sent:
@@ -114,7 +69,6 @@ async def send_otp(request: Request):
 async def verify_otp(request: Request):
     """Verify OTP and create session"""
     try:
-        init_db()  # Lazy initialize
         body = await request.json()
         email = body.get("email", "").lower().strip()
         otp = body.get("otp", "").strip()
@@ -122,42 +76,33 @@ async def verify_otp(request: Request):
         if not email or not otp:
             return {"success": False, "message": "Email and OTP required"}
         
-        # Check OTP in database
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute(
-            "SELECT * FROM otps WHERE email = ? AND otp_code = ? AND is_used = 0 ORDER BY created_at DESC LIMIT 1", 
-            (email, otp)
-        )
-        row = c.fetchone()
-        
-        if not row:
-            conn.close()
+        # Check OTP
+        if email not in otps_db:
             return {"success": False, "message": "Invalid OTP"}
         
-        # Check if OTP is expired (row[4] is expires_at column)
-        expires_at = datetime.fromisoformat(row[4])
+        otp_data = otps_db[email]
+        
+        if otp_data["otp"] != otp:
+            return {"success": False, "message": "Invalid OTP"}
+        
+        if otp_data["used"]:
+            return {"success": False, "message": "OTP already used"}
+        
+        # Check expiration
+        expires_at = datetime.fromisoformat(otp_data["expires_at"])
         if datetime.utcnow() > expires_at:
-            conn.close()
             return {"success": False, "message": "OTP has expired"}
         
         # Mark OTP as used
-        c.execute("UPDATE otps SET is_used = 1, used_at = CURRENT_TIMESTAMP WHERE id = ?", (row[0],))
-        conn.commit()
+        otp_data["used"] = True
         
-        # Create session token
+        # Create session
         token = str(uuid.uuid4())
-        expires = (datetime.utcnow() + timedelta(hours=24)).isoformat()
-        c.execute(
-            "INSERT INTO sessions (email, session_token, expires_at) VALUES (?, ?, ?)", 
-            (email, token, expires)
-        )
-        conn.commit()
+        expires = datetime.utcnow() + timedelta(hours=24)
+        sessions_db[token] = {"email": email, "expires_at": expires.isoformat(), "active": True}
         
-        # Update last login
-        c.execute("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE email = ?", (email,))
-        conn.commit()
-        conn.close()
+        # Update user last login
+        users_db[email]["last_login"] = datetime.utcnow().isoformat()
         
         print(f"✅ OTP verified for {email}. Session created: {token[:8]}...")
         return {
@@ -176,32 +121,27 @@ async def verify_otp(request: Request):
 async def verify_session(request: Request):
     """Verify if session token is valid"""
     try:
-        init_db()  # Lazy initialize
         body = await request.json()
-        token = body.get("session_token", "").strip()  # FIX: was getting "email" instead of session_token
+        token = body.get("session_token", "").strip()
         
         if not token:
             return {"success": False, "message": "Session token required"}
         
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute(
-            "SELECT * FROM sessions WHERE session_token = ? AND is_active = 1", 
-            (token,)
-        )
-        row = c.fetchone()
-        conn.close()
-        
-        if not row:
+        if token not in sessions_db:
             return {"success": False, "message": "Invalid session"}
         
-        # Check if session expired (row[4] is expires_at)
-        expires_at = datetime.fromisoformat(row[4])
+        session_data = sessions_db[token]
+        
+        if not session_data["active"]:
+            return {"success": False, "message": "Session inactive"}
+        
+        # Check expiration
+        expires_at = datetime.fromisoformat(session_data["expires_at"])
         if datetime.utcnow() > expires_at:
             return {"success": False, "message": "Session expired"}
         
-        print(f"✅ Session verified for {row[1]}")
-        return {"success": True, "email": row[1]}
+        print(f"✅ Session verified for {session_data['email']}")
+        return {"success": True, "email": session_data["email"]}
     
     except Exception as e:
         print(f"Error in verify_session: {str(e)}")
@@ -212,18 +152,14 @@ async def verify_session(request: Request):
 async def logout(request: Request):
     """Invalidate session"""
     try:
-        init_db()  # Lazy initialize
         body = await request.json()
         token = body.get("session_token", "").strip()
         
         if not token:
             return {"success": False, "message": "Session token required"}
         
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("UPDATE sessions SET is_active = 0 WHERE session_token = ?", (token,))
-        conn.commit()
-        conn.close()
+        if token in sessions_db:
+            sessions_db[token]["active"] = False
         
         print(f"✅ Session logged out: {token[:8]}...")
         return {"success": True, "message": "Logged out successfully"}
@@ -237,23 +173,18 @@ async def logout(request: Request):
 def get_user(email: str):
     """Get user information"""
     try:
-        init_db()  # Lazy initialize
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT id, email, created_at, last_login FROM users WHERE email = ?", (email.lower().strip(),))
-        row = c.fetchone()
-        conn.close()
+        email = email.lower().strip()
         
-        if not row:
+        if email not in users_db:
             return {"success": False, "message": "User not found"}
         
+        user = users_db[email]
         return {
             "success": True, 
             "user": {
-                "id": row[0], 
-                "email": row[1],
-                "created_at": row[2],
-                "last_login": row[3]
+                "email": email,
+                "created_at": user.get("created_at"),
+                "last_login": user.get("last_login")
             }
         }
     except Exception as e:
@@ -263,5 +194,4 @@ def get_user(email: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
+    uvicorn.run(app, host="0.0.0.0", port=10000)
