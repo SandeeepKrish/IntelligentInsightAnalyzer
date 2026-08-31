@@ -13,6 +13,11 @@ import streamlit as st
 import sys
 import os
 from dotenv import load_dotenv
+import logging
+
+# Suppress Streamlit internal API warnings
+logging.getLogger("streamlit").setLevel(logging.ERROR)
+logging.getLogger("streamlit.logger").setLevel(logging.ERROR)
 
 # Load environment variables
 load_dotenv()
