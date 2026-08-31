@@ -18,10 +18,15 @@ app.add_middleware(
 )
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '../database/auth.db')
+_DB_INITIALIZED = False
 
 
 def init_db():
-    """Initialize SQLite database with required tables"""
+    """Initialize SQLite database with required tables (lazy load)"""
+    global _DB_INITIALIZED
+    if _DB_INITIALIZED:
+        return
+    
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -51,18 +56,18 @@ def init_db():
     )''')
     conn.commit()
     conn.close()
-
-
-init_db()
+    _DB_INITIALIZED = True
 
 
 @app.get("/")
 def root():
+    init_db()  # Lazy initialize on first request
     return {"status": "ok", "service": "IntelligentInsightAnalyzer Auth", "message": "Backend is running", "docs": "/docs"}
 
 
 @app.get("/health")
 def health():
+    init_db()  # Lazy initialize on first request
     return {"status": "ok"}
 
 
@@ -70,6 +75,7 @@ def health():
 async def send_otp(request: Request):
     """Send OTP to user email"""
     try:
+        init_db()  # Lazy initialize
         body = await request.json()
         email = body.get("email", "").lower().strip()
         
@@ -108,6 +114,7 @@ async def send_otp(request: Request):
 async def verify_otp(request: Request):
     """Verify OTP and create session"""
     try:
+        init_db()  # Lazy initialize
         body = await request.json()
         email = body.get("email", "").lower().strip()
         otp = body.get("otp", "").strip()
@@ -169,6 +176,7 @@ async def verify_otp(request: Request):
 async def verify_session(request: Request):
     """Verify if session token is valid"""
     try:
+        init_db()  # Lazy initialize
         body = await request.json()
         token = body.get("session_token", "").strip()  # FIX: was getting "email" instead of session_token
         
@@ -204,6 +212,7 @@ async def verify_session(request: Request):
 async def logout(request: Request):
     """Invalidate session"""
     try:
+        init_db()  # Lazy initialize
         body = await request.json()
         token = body.get("session_token", "").strip()
         
@@ -228,6 +237,7 @@ async def logout(request: Request):
 def get_user(email: str):
     """Get user information"""
     try:
+        init_db()  # Lazy initialize
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute("SELECT id, email, created_at, last_login FROM users WHERE email = ?", (email.lower().strip(),))
