@@ -22,18 +22,6 @@ logging.getLogger("streamlit.logger").setLevel(logging.ERROR)
 # Load environment variables
 load_dotenv()
 
-# ============================================================================
-# Authentication Check - Initialize State
-# ============================================================================
-
-# Initialize authentication state
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "session_token" not in st.session_state:
-    st.session_state.session_token = None
-if "user_email" not in st.session_state:
-    st.session_state.user_email = None
-
 # Add backend src to Python path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../backend/src'))
 
@@ -63,41 +51,6 @@ st.set_page_config(
 
 st.title("🔬 IntelligentInsightAnalyzer")
 st.caption("AI-powered multi-domain data analysis with advanced temporal and aggregation analytics")
-
-# ============================================================================
-# Show Login Banner if Not Authenticated
-# ============================================================================
-
-if not st.session_state.authenticated:
-    st.error("""
-    🔐 **Please Login to Continue**
-    
-    Go to the **Login** page in the sidebar to authenticate with your email and OTP.
-    """)
-else:
-    # Show logout option
-    col1, col2, col3 = st.columns([10, 1, 1])
-    with col3:
-        if st.button("🚪 Logout"):
-            import requests
-            API_URL = "https://intelligentinsightanalyzer.onrender.com"  # Production backend
-            try:
-                requests.post(
-                    f"{API_URL}/auth/logout",
-                    json={"session_token": st.session_state.session_token},
-                    timeout=10
-                )
-            except:
-                pass
-            st.session_state.authenticated = False
-            st.session_state.session_token = None
-            st.session_state.user_email = None
-            st.success("✅ Logged out!")
-            import time
-            time.sleep(1)
-            st.rerun()
-    with col1:
-        st.caption(f"👤 Logged in as: **{st.session_state.user_email}**")
 
 
 # ============================================================================
